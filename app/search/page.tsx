@@ -78,8 +78,8 @@ export default async function SearchPage({
 
         <section className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-7">
           <div className="min-w-0">
-            <div className="soft-card mb-5 grid gap-4 rounded-[24px] p-3 md:rounded-[26px] md:p-4">
-              <div>
+            <div className="soft-card mb-5 flex flex-col gap-4 overflow-hidden rounded-[24px] p-3 md:rounded-[26px] md:p-4">
+              <div className="min-w-0">
                 <span className="mb-2 block text-xs font-black text-muted">კატეგორია</span>
                 <FilterChips
                   items={categoryOptions}
@@ -87,7 +87,7 @@ export default async function SearchPage({
                   getHref={(value) => pathWithSearchParams("/search", params, { category: value, cursor: null })}
                 />
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="mb-2 block text-xs font-black text-muted">მომზადების დრო</span>
                 <FilterChips
                   items={timeFilterOptions}
@@ -95,7 +95,7 @@ export default async function SearchPage({
                   getHref={(value) => pathWithSearchParams("/search", params, { time: value, cursor: null })}
                 />
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="mb-2 block text-xs font-black text-muted">სირთულე</span>
                 <FilterChips
                   items={difficultyFilterOptions}
