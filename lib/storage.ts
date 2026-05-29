@@ -1,6 +1,7 @@
 import { getSupabaseConfig } from "./supabase/env";
 
 export const RECIPE_BUCKET = "recipe-images";
+export const RECIPE_VIDEO_BUCKET = "recipe-videos";
 export const AVATAR_BUCKET = "avatars";
 
 const RECIPE_FALLBACK = "/assets/chakhokhbili.jpg";
@@ -22,6 +23,10 @@ export function getPublicImageUrl(path: string | null | undefined, bucket: strin
 
 export function getRecipeImageUrl(path: string | null | undefined) {
   return getPublicImageUrl(path, RECIPE_BUCKET, RECIPE_FALLBACK);
+}
+
+export function getRecipeVideoUrl(path: string | null | undefined) {
+  return getPublicImageUrl(path, RECIPE_VIDEO_BUCKET, "");
 }
 
 export function getAvatarUrl(path: string | null | undefined) {

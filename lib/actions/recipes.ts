@@ -70,6 +70,7 @@ function recipePayload(input: RecipeInput, userId: string, status: "draft" | "pu
     title: input.title,
     description: input.description,
     image_url: input.imageUrl,
+    video_url: input.videoUrl,
     cooking_time: input.cookingTime,
     difficulty: input.difficulty,
     servings: input.servings,

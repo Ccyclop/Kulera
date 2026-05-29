@@ -1,14 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Play, Share2 } from "lucide-react";
+import { ArrowLeft, Share2 } from "lucide-react";
 import { BookmarkToggle } from "@/components/bookmark-toggle";
 import { CommentThread } from "@/components/comment-thread";
+import { IngredientsPanel } from "@/components/ingredients-panel";
 import { HeroTitle, Reveal, Stagger } from "@/components/motion";
 import { PageShell } from "@/components/page-shell";
 import { RatingWidget } from "@/components/rating-widget";
 import { RecipeCard } from "@/components/recipe-card";
-import { Badge, Button, ButtonLink, RatingStars } from "@/components/ui";
+import { VideoLightboxTrigger } from "@/components/video-lightbox";
+import { Badge, ButtonLink, RatingStars } from "@/components/ui";
 import { getAuthClaims } from "@/lib/auth";
 import {
   getRecipeBySlug,
@@ -17,6 +19,7 @@ import {
   getUserRecipeRating,
   isRecipeSavedBy,
 } from "@/lib/data";
+import { parseServingsCount } from "@/lib/ingredients";
 
 export const dynamic = "force-dynamic";
 
@@ -79,17 +82,17 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ s
                 </div>
               </div>
               <div className="mt-8 flex flex-wrap gap-2">
-                <Button>დაწყება</Button>
+                <ButtonLink href={`/recipes/${recipe.slug}/cook`}>დაწყება</ButtonLink>
                 <BookmarkToggle
                   recipeId={recipe.id}
                   recipeSlug={recipe.slug}
                   initialSaved={initialSaved}
                   isAuthenticated={Boolean(userId)}
                 />
-                <Button variant="secondary">
+                <ButtonLink href="#" variant="secondary">
                   <Share2 className="h-4 w-4" />
                   გაზიარება
-                </Button>
+                </ButtonLink>
                 <ButtonLink href={`/recipes/${recipe.slug}/edit`} variant="secondary">
                   რედაქტირება
                 </ButtonLink>
@@ -100,12 +103,9 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ s
           <div className="relative min-h-[420px] overflow-hidden rounded-[30px] bg-placeholder shadow-panel xl:min-h-[540px]">
             <Image src={recipe.imageUrl} alt={recipe.title} fill sizes="50vw" className="object-cover" priority />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-ink/55" />
-            <button className="absolute bottom-6 left-6 z-10 inline-flex min-h-12 items-center gap-3 rounded-full border border-white/50 bg-white/95 px-4 text-[13px] font-black">
-              <span className="grid h-7 w-7 place-items-center rounded-full bg-clay text-white">
-                <Play className="h-3 w-3 fill-current" />
-              </span>
-              ვიდეო რეცეპტი
-            </button>
+            {recipe.videoUrl ? (
+              <VideoLightboxTrigger videoUrl={recipe.videoUrl} title={recipe.title} />
+            ) : null}
           </div>
         </Reveal>
 
@@ -170,24 +170,12 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ s
             <CommentThread comments={recipeComments} currentUserId={userId} recipeId={recipe.id} recipeSlug={recipe.slug} />
           </div>
 
-          <aside className="soft-card h-fit rounded-[28px] p-5 xl:sticky xl:top-28">
-            <h2 className="text-[23px] font-black leading-tight">ინგრედიენტები</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted">მონიშნე რაც უკვე გაქვს.</p>
-            <div className="mt-5 inline-flex min-h-[42px] items-center gap-3 rounded-full border border-oat bg-[#FAF6F0] px-3 text-[13px] font-black">
-              <button className="grid h-7 w-7 place-items-center rounded-full bg-surface text-clay">-</button>
-              <span>{recipe.servings} პორცია</span>
-              <button className="grid h-7 w-7 place-items-center rounded-full bg-surface text-clay">+</button>
-            </div>
-            <ul className="mt-5 grid">
-              {recipe.ingredients.map((ingredient) => (
-                <li key={ingredient.name} className="grid min-h-11 grid-cols-[24px_1fr_auto] items-center gap-3 border-t border-oat py-2 first:border-t-0">
-                  <span className="h-5 w-5 rounded-[7px] border border-sand bg-[#FAF6F0]" />
-                  <span className="text-sm font-bold">{ingredient.name}</span>
-                  <span className="text-xs font-black text-muted">{ingredient.amount}</span>
-                </li>
-              ))}
-            </ul>
-          </aside>
+          <IngredientsPanel
+            ingredients={recipe.ingredients}
+            baseServings={recipe.baseServings ?? parseServingsCount(recipe.servings)}
+            initialServings={recipe.baseServings ?? parseServingsCount(recipe.servings) ?? 1}
+            servingsLabel={recipe.servings}
+          />
         </Reveal>
 
         <section className="mt-10">

@@ -13,12 +13,16 @@ export interface Category {
 
 export interface Ingredient {
   name: string;
+  quantity: number | null;
+  unit: string;
+  note: string;
   amount: string;
 }
 
 export interface RecipeStep {
   title: string;
   body: string;
+  durationSeconds: number | null;
 }
 
 export interface RecipeTip {
@@ -36,6 +40,9 @@ export interface Recipe {
   categoryName: string;
   imageUrl: string;
   imagePath: string | null;
+  videoUrl: string | null;
+  videoPath: string | null;
+  baseServings: number | null;
   cookingTime: number;
   difficulty: Difficulty;
   servings: string;
