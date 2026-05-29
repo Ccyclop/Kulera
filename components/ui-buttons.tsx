@@ -19,7 +19,13 @@ export const buttonVariants: Record<ButtonVariant, string> = {
   danger: "border border-danger/25 bg-danger/10 text-danger hover:bg-danger hover:text-white",
 };
 
-function ButtonShine({ variant }: { variant: ButtonVariant }) {
+export const motionButtonProps = {
+  whileHover: { y: -2 },
+  whileTap: { scale: 0.96, y: 0 },
+  transition: { type: "spring" as const, stiffness: 420, damping: 24 },
+};
+
+export function ButtonShine({ variant }: { variant: ButtonVariant }) {
   if (variant === "ghost") return null;
   const tint =
     variant === "primary" || variant === "danger" ? "via-white/30" : "via-clay/15";
@@ -33,12 +39,6 @@ function ButtonShine({ variant }: { variant: ButtonVariant }) {
     />
   );
 }
-
-const motionButtonProps = {
-  whileHover: { y: -2 },
-  whileTap: { scale: 0.96, y: 0 },
-  transition: { type: "spring" as const, stiffness: 420, damping: 24 },
-};
 
 export function Button({
   variant = "primary",

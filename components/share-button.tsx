@@ -4,13 +4,7 @@ import { motion } from "framer-motion";
 import { Check, Share2 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
-import { buttonBase, buttonVariants } from "./ui-buttons";
-
-const motionButtonProps = {
-  whileHover: { y: -2 },
-  whileTap: { scale: 0.96, y: 0 },
-  transition: { type: "spring" as const, stiffness: 420, damping: 24 },
-};
+import { ButtonShine, buttonBase, buttonVariants, motionButtonProps } from "./ui-buttons";
 
 type Status = "idle" | "shared" | "copied";
 
@@ -69,6 +63,7 @@ export function ShareButton({
       className={cn(buttonBase, buttonVariants.secondary, "transition-colors duration-200")}
       aria-live="polite"
     >
+      <ButtonShine variant="secondary" />
       <span className="relative z-[1] inline-flex items-center gap-2">
         <Icon className="h-4 w-4" />
         {label}

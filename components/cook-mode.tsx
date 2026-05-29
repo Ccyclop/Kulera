@@ -19,6 +19,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { FocusDialog } from "@/components/focus-dialog";
+import { Button, ButtonLink } from "@/components/ui-buttons";
 import { cn } from "@/lib/cn";
 import { formatAmount, formatQuantity } from "@/lib/ingredients";
 import type { Ingredient, Recipe, RecipeStep } from "@/lib/types";
@@ -142,13 +143,10 @@ function StepTimer({ step }: { step: RecipeStep }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
+          <Button
             type="button"
+            variant={timerRunning ? "secondary" : "primary"}
             onClick={() => setTimerRunning((value) => !value)}
-            className={cn(
-              "inline-flex min-h-12 items-center justify-center gap-2 rounded-[15px] px-4 text-sm font-black",
-              timerRunning ? "border border-oat bg-surface text-ink" : "bg-clay text-white",
-            )}
           >
             {timerRunning ? (
               <>
@@ -161,19 +159,19 @@ function StepTimer({ step }: { step: RecipeStep }) {
                 დაწყება
               </>
             )}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="secondary"
             onClick={() => {
               setSecondsLeft(totalSeconds);
               setTimerCompleted(false);
               setTimerRunning(false);
             }}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[15px] border border-oat bg-surface px-4 text-sm font-black"
           >
             <RotateCcw className="h-4 w-4" />
             განულება
-          </button>
+          </Button>
         </div>
       </div>
       <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-oat/80">
@@ -320,13 +318,12 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
             <p className="mt-3 text-sm text-muted">
               დაბრუნდი რეცეპტზე და დაამატე ნაბიჯები რომ მზადებას მიყვე.
             </p>
-            <Link
-              href={`/recipes/${recipe.slug}`}
-              className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-[15px] bg-clay px-5 text-sm font-black text-white no-underline"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              რეცეპტზე დაბრუნება
-            </Link>
+            <div className="mt-5 inline-flex">
+              <ButtonLink href={`/recipes/${recipe.slug}`}>
+                <ArrowLeft className="h-4 w-4" />
+                რეცეპტზე დაბრუნება
+              </ButtonLink>
+            </div>
           </div>
         </div>
       </div>
@@ -362,22 +359,15 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
               </div>
             </dl>
 
-            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
-              <Link
-                href={`/recipes/${recipe.slug}`}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[15px] bg-clay px-5 text-sm font-black text-white no-underline"
-              >
+            <div className="mt-6 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+              <ButtonLink href={`/recipes/${recipe.slug}`}>
                 <Sparkles className="h-4 w-4" />
                 შეფასების დატოვება
-              </Link>
-              <button
-                type="button"
-                onClick={restart}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[15px] border border-oat bg-surface px-5 text-sm font-black text-ink"
-              >
+              </ButtonLink>
+              <Button type="button" variant="secondary" onClick={restart}>
                 <RotateCcw className="h-4 w-4" />
                 თავიდან დაწყება
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -515,47 +505,32 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
             )}
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <button
-                type="button"
-                onClick={goPrev}
-                disabled={stepIndex === 0}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[15px] border border-oat bg-surface px-4 text-sm font-black text-ink transition disabled:cursor-not-allowed disabled:opacity-40"
-              >
+              <Button type="button" variant="secondary" onClick={goPrev} disabled={stepIndex === 0}>
                 <ChevronLeft className="h-4 w-4" />
                 წინა
-              </button>
+              </Button>
 
               <div className="flex flex-wrap items-center gap-2">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={markCurrentDone}
                   disabled={completed.has(stepIndex)}
-                  className={cn(
-                    "inline-flex min-h-11 items-center justify-center gap-2 rounded-[15px] border border-oat bg-surface px-3 text-sm font-black text-ink transition",
-                    completed.has(stepIndex) && "border-sage/40 bg-sage-light text-sage",
-                  )}
+                  className={cn(completed.has(stepIndex) && "border-sage/40 bg-sage-light text-sage")}
                 >
                   <Check className="h-4 w-4" />
                   {completed.has(stepIndex) ? "მონიშნულია" : "გავაკეთე"}
-                </button>
+                </Button>
                 {isLast ? (
-                  <button
-                    type="button"
-                    onClick={finish}
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[15px] bg-clay px-5 text-sm font-black text-white"
-                  >
+                  <Button type="button" onClick={finish}>
                     <Trophy className="h-4 w-4" />
                     დასრულება
-                  </button>
+                  </Button>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={goNext}
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[15px] bg-clay px-5 text-sm font-black text-white"
-                  >
+                  <Button type="button" onClick={goNext}>
                     შემდეგი
                     <ChevronRight className="h-4 w-4" />
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -780,14 +755,10 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
             </ol>
           </div>
 
-          <div className="border-t border-oat bg-[#FAF6F0] px-4 py-3 text-center">
-            <button
-              type="button"
-              onClick={() => setMobilePanelOpen(false)}
-              className="inline-flex min-h-11 w-full items-center justify-center rounded-[15px] bg-clay px-4 text-sm font-black text-white"
-            >
+          <div className="border-t border-oat bg-[#FAF6F0] px-4 py-3">
+            <Button type="button" onClick={() => setMobilePanelOpen(false)} className="w-full">
               დახურვა
-            </button>
+            </Button>
           </div>
         </FocusDialog>
       ) : null}
