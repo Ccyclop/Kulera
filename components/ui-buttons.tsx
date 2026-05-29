@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { Children, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { useI18n } from "@/components/i18n-provider";
 import { cn } from "@/lib/cn";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
@@ -25,6 +26,17 @@ export const motionButtonProps = {
   transition: { type: "spring" as const, stiffness: 420, damping: 24 },
 };
 
+function translateChildren(children: ReactNode, t: (key: string) => string) {
+  return Children.map(children, (child) => {
+    if (typeof child !== "string") return child;
+
+    const trimmed = child.trim();
+    if (!trimmed) return child;
+
+    return child.replace(trimmed, t(trimmed));
+  });
+}
+
 export function ButtonShine({ variant }: { variant: ButtonVariant }) {
   if (variant === "ghost") return null;
   const tint =
@@ -46,6 +58,8 @@ export function Button({
   children,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }) {
+  const { t } = useI18n();
+
   return (
     <motion.button
       {...motionButtonProps}
@@ -53,7 +67,7 @@ export function Button({
       {...(props as object)}
     >
       <ButtonShine variant={variant} />
-      <span className="relative z-[1] inline-flex items-center gap-2">{children}</span>
+      <span className="relative z-[1] inline-flex items-center gap-2">{translateChildren(children, t)}</span>
     </motion.button>
   );
 }
@@ -69,6 +83,8 @@ export function ButtonLink({
   className?: string;
   children: ReactNode;
 }) {
+  const { t } = useI18n();
+
   return (
     <motion.span {...motionButtonProps} className="inline-flex">
       <Link
@@ -76,7 +92,7 @@ export function ButtonLink({
         className={cn(buttonBase, buttonVariants[variant], "transition-colors duration-200", className)}
       >
         <ButtonShine variant={variant} />
-        <span className="relative z-[1] inline-flex items-center gap-2">{children}</span>
+        <span className="relative z-[1] inline-flex items-center gap-2">{translateChildren(children, t)}</span>
       </Link>
     </motion.span>
   );

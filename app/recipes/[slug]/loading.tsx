@@ -1,8 +1,6 @@
-import { PageShell } from "@/components/page-shell";
 
 export default function Loading() {
   return (
-    <PageShell>
       <main className="page-main">
         <div className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_360px]" aria-hidden="true">
           <div className="grid gap-5">
@@ -25,6 +23,5 @@ export default function Loading() {
           </aside>
         </div>
       </main>
-    </PageShell>
   );
 }

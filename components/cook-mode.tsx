@@ -19,8 +19,11 @@ import {
   Trophy,
 } from "lucide-react";
 import { FocusDialog } from "@/components/focus-dialog";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useI18n } from "@/components/i18n-provider";
 import { Button, ButtonLink } from "@/components/ui-buttons";
 import { cn } from "@/lib/cn";
+import { formatMinutes, translateCategoryName, translateDifficulty, translateStepTitle } from "@/lib/i18n/shared";
 import { formatAmount, formatQuantity } from "@/lib/ingredients";
 import type { Ingredient, Recipe, RecipeStep } from "@/lib/types";
 
@@ -105,6 +108,7 @@ function StepTimer({ step }: { step: RecipeStep }) {
   const [secondsLeft, setSecondsLeft] = useState<number>(totalSeconds);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerCompleted, setTimerCompleted] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!timerRunning) return;
@@ -132,7 +136,7 @@ function StepTimer({ step }: { step: RecipeStep }) {
     <div className="mt-8 rounded-[24px] border border-oat bg-[#FAF6F0] p-5">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-[11px] font-black uppercase tracking-wider text-muted">ტაიმერი</p>
+          <p className="text-[11px] font-black uppercase tracking-wider text-muted">{t("ტაიმერი")}</p>
           <p
             className={cn(
               "mt-1 text-[44px] font-black leading-none tabular-nums",
@@ -151,12 +155,12 @@ function StepTimer({ step }: { step: RecipeStep }) {
             {timerRunning ? (
               <>
                 <Pause className="h-4 w-4" />
-                პაუზა
+                {t("პაუზა")}
               </>
             ) : (
               <>
                 <Play className="h-4 w-4" />
-                დაწყება
+                {t("დაწყება")}
               </>
             )}
           </Button>
@@ -170,7 +174,7 @@ function StepTimer({ step }: { step: RecipeStep }) {
             }}
           >
             <RotateCcw className="h-4 w-4" />
-            განულება
+            {t("განულება")}
           </Button>
         </div>
       </div>
@@ -181,7 +185,7 @@ function StepTimer({ step }: { step: RecipeStep }) {
         />
       </div>
       {timerCompleted ? (
-        <p className="mt-3 text-sm font-black text-sage">დრო ამოიწურა — გადადი შემდეგ ნაბიჯზე.</p>
+        <p className="mt-3 text-sm font-black text-sage">{t("დრო ამოიწურა — გადადი შემდეგ ნაბიჯზე.")}</p>
       ) : null}
     </div>
   );
@@ -197,6 +201,7 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(() => new Set());
   const [finished, setFinished] = useState(false);
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
+  const { locale, t } = useI18n();
 
   const scale = baseServings && baseServings > 0 ? servings / baseServings : 1;
 
@@ -314,14 +319,14 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
       <div className="min-h-screen bg-paper">
         <div className="page-main grid place-items-center text-center">
           <div className="soft-card max-w-md rounded-[28px] p-8">
-            <h1 className="text-2xl font-black">ეს რეცეპტი ჯერ არ შეიცავს ნაბიჯებს</h1>
+            <h1 className="text-2xl font-black">{t("ეს რეცეპტი ჯერ არ შეიცავს ნაბიჯებს")}</h1>
             <p className="mt-3 text-sm text-muted">
-              დაბრუნდი რეცეპტზე და დაამატე ნაბიჯები რომ მზადებას მიყვე.
+              {t("დაბრუნდი რეცეპტზე და დაამატე ნაბიჯები რომ მზადებას მიყვე.")}
             </p>
             <div className="mt-5 inline-flex">
               <ButtonLink href={`/recipes/${recipe.slug}`}>
                 <ArrowLeft className="h-4 w-4" />
-                რეცეპტზე დაბრუნება
+                {t("რეცეპტზე დაბრუნება")}
               </ButtonLink>
             </div>
           </div>
@@ -339,34 +344,34 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
             <span className="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-sage-light text-sage">
               <Trophy className="h-9 w-9" />
             </span>
-            <h1 className="mt-5 text-[34px] font-black leading-tight">გილოცავ — გავაკეთე!</h1>
+            <h1 className="mt-5 text-[34px] font-black leading-tight">{t("გილოცავ — გავაკეთე!")}</h1>
             <p className="mt-3 text-base leading-relaxed text-muted">
-              {recipe.title} მზად არის. გასინჯე, გააზიარე ოჯახთან და დატოვე შეფასება.
+              {t("{title} მზად არის. გასინჯე, გააზიარე ოჯახთან და დატოვე შეფასება.", { title: recipe.title })}
             </p>
 
             <dl className="mt-6 grid grid-cols-3 gap-2 text-center">
               <div className="rounded-[18px] border border-oat bg-[#FAF6F0] p-3">
-                <dt className="text-[11px] font-extrabold text-muted">ნაბიჯი</dt>
+                <dt className="text-[11px] font-extrabold text-muted">{t("ნაბიჯი")}</dt>
                 <dd className="text-lg font-black tabular-nums">{totalSteps}</dd>
               </div>
               <div className="rounded-[18px] border border-oat bg-[#FAF6F0] p-3">
-                <dt className="text-[11px] font-extrabold text-muted">პორცია</dt>
+                <dt className="text-[11px] font-extrabold text-muted">{t("პორცია")}</dt>
                 <dd className="text-lg font-black tabular-nums">{servings}</dd>
               </div>
               <div className="rounded-[18px] border border-oat bg-[#FAF6F0] p-3">
-                <dt className="text-[11px] font-extrabold text-muted">დრო</dt>
-                <dd className="text-lg font-black tabular-nums">{recipe.cookingTime} წთ</dd>
+                <dt className="text-[11px] font-extrabold text-muted">{t("დრო")}</dt>
+                <dd className="text-lg font-black tabular-nums">{formatMinutes(locale, recipe.cookingTime)}</dd>
               </div>
             </dl>
 
             <div className="mt-6 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
               <ButtonLink href={`/recipes/${recipe.slug}`}>
                 <Sparkles className="h-4 w-4" />
-                შეფასების დატოვება
+                {t("შეფასების დატოვება")}
               </ButtonLink>
               <Button type="button" variant="secondary" onClick={restart}>
                 <RotateCcw className="h-4 w-4" />
-                თავიდან დაწყება
+                {t("თავიდან დაწყება")}
               </Button>
             </div>
           </div>
@@ -388,7 +393,7 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
             className="inline-flex items-center gap-2 text-[13px] font-extrabold text-muted no-underline"
           >
             <ArrowLeft className="h-4 w-4" />
-            გასვლა
+            {t("გასვლა")}
           </Link>
           <div className="flex items-center gap-3 text-[13px] font-black text-ink">
             <span className="grid h-8 w-8 place-items-center rounded-full bg-soft-clay text-clay-dark">
@@ -401,11 +406,12 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
               type="button"
               onClick={() => setMobilePanelOpen(true)}
               className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-oat bg-surface px-3 text-xs font-black text-ink xl:hidden"
-              aria-label="ინგრედიენტები და ნაბიჯები"
+              aria-label={t("ინგრედიენტები და ნაბიჯები")}
             >
               <ListChecks className="h-3.5 w-3.5 text-clay" />
-              ინგრედიენტები
+              {t("ინგრედიენტები")}
             </button>
+            <LanguageSwitcher variant="compact" className="hidden sm:inline-flex" />
             <div className="inline-flex min-h-9 items-center gap-2 rounded-full border border-oat bg-surface px-3 text-xs font-black text-muted tabular-nums">
               <Flame className="h-3.5 w-3.5 text-clay" />
               {completedCount}/{totalSteps}
@@ -454,24 +460,24 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
 
           <div className="relative flex shrink-0 items-center justify-between gap-2">
             <span className="inline-flex items-center gap-2 rounded-full bg-soft-clay px-3 py-1 text-[12px] font-black text-clay-dark">
-              ნაბიჯი {stepIndex + 1} / {totalSteps}
+              {t("ნაბიჯი {count}", { count: stepIndex + 1 })} / {totalSteps}
             </span>
             <div className="flex items-center gap-2">
               {hasTimer ? (
                 <span className="inline-flex items-center gap-2 rounded-full border border-oat bg-[#FAF6F0] px-3 py-1 text-[12px] font-black text-muted">
                   <TimerIcon className="h-3.5 w-3.5" />
-                  {Math.round((currentStep?.durationSeconds ?? 0) / 60)} წთ
+                  {formatMinutes(locale, Math.round((currentStep?.durationSeconds ?? 0) / 60))}
                 </span>
               ) : null}
               <span className="inline-flex items-center gap-1 rounded-full border border-oat bg-[#FAF6F0] px-3 py-1 text-[12px] font-black text-muted">
-                {recipe.difficulty}
+                {translateDifficulty(locale, recipe.difficulty)}
               </span>
             </div>
           </div>
 
           <div className="relative mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
             <h1 className="text-[clamp(28px,3.4vw,46px)] font-black leading-[1.05] tracking-tight">
-              {currentStep?.title}
+              {currentStep ? translateStepTitle(locale, currentStep.title) : ""}
             </h1>
             <p className="mt-3 max-w-3xl text-[clamp(15px,1.5vw,18px)] leading-relaxed text-muted">
               {currentStep?.body}
@@ -487,27 +493,27 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
                   {stepIndex + 2}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-muted">შემდეგი</p>
-                  <p className="truncate text-sm font-black">{nextStep.title}</p>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-muted">{t("შემდეგი")}</p>
+                  <p className="truncate text-sm font-black">{translateStepTitle(locale, nextStep.title)}</p>
                 </div>
                 {nextStep.durationSeconds ? (
                   <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-surface px-2 py-1 text-[10px] font-black text-muted">
                     <TimerIcon className="h-3 w-3" />
-                    {Math.round(nextStep.durationSeconds / 60)} წთ
+                    {formatMinutes(locale, Math.round(nextStep.durationSeconds / 60))}
                   </span>
                 ) : null}
               </div>
             ) : (
               <div className="flex items-center gap-3 rounded-[18px] border border-dashed border-sage/40 bg-sage-light px-4 py-3 text-sage">
                 <Trophy className="h-5 w-5" />
-                <p className="text-sm font-black">ეს ბოლო ნაბიჯია — შემდეგ მზად ხარ!</p>
+                <p className="text-sm font-black">{t("ეს ბოლო ნაბიჯია — შემდეგ მზად ხარ!")}</p>
               </div>
             )}
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <Button type="button" variant="secondary" onClick={goPrev} disabled={stepIndex === 0}>
                 <ChevronLeft className="h-4 w-4" />
-                წინა
+                {t("წინა")}
               </Button>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -519,16 +525,16 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
                   className={cn(completed.has(stepIndex) && "border-sage/40 bg-sage-light text-sage")}
                 >
                   <Check className="h-4 w-4" />
-                  {completed.has(stepIndex) ? "მონიშნულია" : "გავაკეთე"}
+                  {completed.has(stepIndex) ? t("მონიშნულია") : t("გავაკეთე")}
                 </Button>
                 {isLast ? (
                   <Button type="button" onClick={finish}>
                     <Trophy className="h-4 w-4" />
-                    დასრულება
+                    {t("დასრულება")}
                   </Button>
                 ) : (
                   <Button type="button" onClick={goNext}>
-                    შემდეგი
+                    {t("შემდეგი")}
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 )}
@@ -548,24 +554,24 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-ink/75 via-ink/25 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-              <p className="text-[11px] font-black uppercase tracking-wider opacity-80">{recipe.categoryName}</p>
+              <p className="text-[11px] font-black uppercase tracking-wider opacity-80">{translateCategoryName(locale, recipe.categoryName)}</p>
               <h2 className="mt-1 text-[20px] font-black leading-tight">{recipe.title}</h2>
               <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-black backdrop-blur tabular-nums">
-                {totalSteps} ნაბიჯი • {totalDuration > 0 ? `${Math.round(totalDuration / 60)} წთ` : `${recipe.cookingTime} წთ`} • {recipe.difficulty}
+                {t("{count} ნაბიჯი", { count: totalSteps })} • {totalDuration > 0 ? formatMinutes(locale, Math.round(totalDuration / 60)) : formatMinutes(locale, recipe.cookingTime)} • {translateDifficulty(locale, recipe.difficulty)}
               </p>
             </div>
           </div>
 
           <div className="soft-card flex max-h-[42vh] flex-col overflow-hidden rounded-[22px]">
             <div className="flex shrink-0 items-center justify-between gap-2 border-b border-oat px-4 py-3">
-              <h3 className="text-[15px] font-black leading-tight">ინგრედიენტები</h3>
+              <h3 className="text-[15px] font-black leading-tight">{t("ინგრედიენტები")}</h3>
               <div className="inline-flex items-center gap-1 rounded-full border border-oat bg-[#FAF6F0] px-1.5 py-0.5 text-[11px] font-black">
                 <button
                   type="button"
                   onClick={() => adjustServings(-1)}
                   disabled={servings <= 1}
                   className="grid h-6 w-6 place-items-center rounded-full bg-surface text-clay disabled:opacity-40"
-                  aria-label="პორციის შემცირება"
+                  aria-label={t("პორციის შემცირება")}
                 >
                   −
                 </button>
@@ -575,7 +581,7 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
                   onClick={() => adjustServings(1)}
                   disabled={servings >= 24}
                   className="grid h-6 w-6 place-items-center rounded-full bg-surface text-clay disabled:opacity-40"
-                  aria-label="პორციის გაზრდა"
+                  aria-label={t("პორციის გაზრდა")}
                 >
                   +
                 </button>
@@ -613,7 +619,7 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
           </div>
 
           <div className="soft-card flex max-h-[32vh] flex-col overflow-hidden rounded-[22px] p-3">
-            <h3 className="shrink-0 px-1 text-[13px] font-black leading-tight text-muted">ნაბიჯები</h3>
+            <h3 className="shrink-0 px-1 text-[13px] font-black leading-tight text-muted">{t("მომზადების ნაბიჯები")}</h3>
             <ol className="mt-2 grid min-h-0 flex-1 gap-0.5 overflow-y-auto">
               {recipe.steps.map((step, index) => {
                 const isActive = index === stepIndex;
@@ -637,10 +643,10 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
                       >
                         {isDone ? <Check className="h-3 w-3" /> : index + 1}
                       </span>
-                      <span className="truncate">{step.title}</span>
+                      <span className="truncate">{translateStepTitle(locale, step.title)}</span>
                       {step.durationSeconds ? (
                         <span className="text-[10px] font-black uppercase tracking-wider text-muted">
-                          {Math.round(step.durationSeconds / 60)}წ
+                          {formatMinutes(locale, Math.round(step.durationSeconds / 60))}
                         </span>
                       ) : null}
                     </button>
@@ -660,7 +666,7 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
         >
           <div className="flex items-center justify-between gap-2 border-b border-oat px-4 py-3">
             <h2 id="cook-mobile-panel-title" className="text-base font-black">
-              ინგრედიენტები
+              {t("ინგრედიენტები")}
             </h2>
             <div className="inline-flex items-center gap-1 rounded-full border border-oat bg-[#FAF6F0] px-1.5 py-0.5 text-[11px] font-black">
               <button
@@ -668,7 +674,7 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
                 onClick={() => adjustServings(-1)}
                 disabled={servings <= 1}
                 className="grid h-6 w-6 place-items-center rounded-full bg-surface text-clay disabled:opacity-40"
-                aria-label="პორციის შემცირება"
+                aria-label={t("პორციის შემცირება")}
               >
                 −
               </button>
@@ -678,7 +684,7 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
                 onClick={() => adjustServings(1)}
                 disabled={servings >= 24}
                 className="grid h-6 w-6 place-items-center rounded-full bg-surface text-clay disabled:opacity-40"
-                aria-label="პორციის გაზრდა"
+                aria-label={t("პორციის გაზრდა")}
               >
                 +
               </button>
@@ -715,7 +721,7 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
           </ul>
 
           <div className="border-t border-oat px-4 py-3">
-            <h3 className="text-[12px] font-black uppercase tracking-wider text-muted">ნაბიჯები</h3>
+            <h3 className="text-[12px] font-black uppercase tracking-wider text-muted">{t("მომზადების ნაბიჯები")}</h3>
             <ol className="mt-2 max-h-[30vh] overflow-y-auto">
               {recipe.steps.map((step, index) => {
                 const isActive = index === stepIndex;
@@ -742,10 +748,10 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
                       >
                         {isDone ? <Check className="h-3 w-3" /> : index + 1}
                       </span>
-                      <span className="truncate">{step.title}</span>
+                      <span className="truncate">{translateStepTitle(locale, step.title)}</span>
                       {step.durationSeconds ? (
                         <span className="text-[10px] font-black uppercase tracking-wider text-muted">
-                          {Math.round(step.durationSeconds / 60)}წ
+                          {formatMinutes(locale, Math.round(step.durationSeconds / 60))}
                         </span>
                       ) : null}
                     </button>
@@ -757,7 +763,7 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
 
           <div className="border-t border-oat bg-[#FAF6F0] px-4 py-3">
             <Button type="button" onClick={() => setMobilePanelOpen(false)} className="w-full">
-              დახურვა
+              {t("დახურვა")}
             </Button>
           </div>
         </FocusDialog>

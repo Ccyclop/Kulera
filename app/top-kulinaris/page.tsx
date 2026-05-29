@@ -1,43 +1,42 @@
 import { ShieldCheck } from "lucide-react";
 import { CookCard } from "@/components/cook-card";
 import { HeroTitle, Reveal, Stagger } from "@/components/motion";
-import { PageShell } from "@/components/page-shell";
 import { Badge, EmptyState, SidebarCard } from "@/components/ui";
 import { getRankedCooks } from "@/lib/data";
+import { getServerTranslator } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function TopKulinarisPage() {
-  const rankedCooks = await getRankedCooks();
+  const [rankedCooks, t] = await Promise.all([getRankedCooks(), getServerTranslator()]);
   const featured = rankedCooks.slice(0, 3);
 
   return (
-    <PageShell>
       <main className="page-main">
         <Reveal as="section" className="mb-8 grid gap-7 xl:grid-cols-[minmax(0,1fr)_340px]">
           <div className="hero-panel min-h-[300px]">
-            <p className="eyebrow">კულინარები</p>
+            <p className="eyebrow">{t("კულინარები")}</p>
             <h1 className="text-[clamp(42px,5vw,74px)] font-black leading-none tracking-normal">
-              <HeroTitle text="ტოპ კულინარები" />
+              <HeroTitle text={t("ტოპ კულინარები")} />
             </h1>
             <p className="mt-4 max-w-2xl text-base font-medium leading-relaxed text-muted">
-              იპოვე კულინარები, რომელთა რეცეპტებს მომხმარებლები ხშირად ირჩევენ და მაღალ შეფასებას აძლევენ.
+              {t("იპოვე კულინარები, რომელთა რეცეპტებს მომხმარებლები ხშირად ირჩევენ და მაღალ შეფასებას აძლევენ.")}
             </p>
-            <span className="hero-watermark">ტოპ</span>
+            <span className="hero-watermark">{t("ტოპ")}</span>
           </div>
           <SidebarCard title="როგორ დგება რეიტინგი">
             <ul className="grid gap-3 text-sm">
               <li className="flex gap-2">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-sage" />
-                კულინარს რამდენიმე რეცეპტი უკვე დამატებული აქვს
+                {t("კულინარს რამდენიმე რეცეპტი უკვე დამატებული აქვს")}
               </li>
               <li className="flex gap-2">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-sage" />
-                რეცეპტებს საკმარისი შეფასებები აქვს
+                {t("რეცეპტებს საკმარისი შეფასებები აქვს")}
               </li>
               <li className="flex gap-2">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-sage" />
-                შედეგი ითვალისწინებს შეფასებასაც და აქტიურობასაც
+                {t("შედეგი ითვალისწინებს შეფასებასაც და აქტიურობასაც")}
               </li>
             </ul>
           </SidebarCard>
@@ -46,10 +45,10 @@ export default async function TopKulinarisPage() {
         <section>
           <div className="section-title">
             <div>
-              <h2>კვირის საუკეთესო სამეული</h2>
-              <p>სამეული ეფუძნება საკმარის აქტივობას და არა მხოლოდ მაღალ საშუალო შეფასებას.</p>
+              <h2>{t("კვირის საუკეთესო სამეული")}</h2>
+              <p>{t("სამეული ეფუძნება საკმარის აქტივობას და არა მხოლოდ მაღალ საშუალო შეფასებას.")}</p>
             </div>
-            <Badge>აქტიური კულინარები</Badge>
+            <Badge>{t("აქტიური კულინარები")}</Badge>
           </div>
           {featured.length > 0 ? (
             <Stagger as="div" className="grid gap-4 lg:grid-cols-3" stagger={0.1} childVariant="fadeUp">
@@ -65,8 +64,8 @@ export default async function TopKulinarisPage() {
         <section>
           <div className="section-title">
             <div>
-              <h2>სრული რეიტინგი</h2>
-              <p>ყველა აქტიური კულინარი, რომლის რეცეპტებსაც უკვე აქვს მომხმარებლების შეფასება.</p>
+              <h2>{t("სრული რეიტინგი")}</h2>
+              <p>{t("ყველა აქტიური კულინარი, რომლის რეცეპტებსაც უკვე აქვს მომხმარებლების შეფასება.")}</p>
             </div>
           </div>
           {rankedCooks.length > 0 ? (
@@ -80,6 +79,5 @@ export default async function TopKulinarisPage() {
           )}
         </section>
       </main>
-    </PageShell>
   );
 }

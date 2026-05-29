@@ -161,7 +161,6 @@ a {
 
   .page-main {
     @apply kulera-container pb-20 pt-8;
-    animation: kulera-fade-up 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   .soft-card {

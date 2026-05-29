@@ -1,5 +1,4 @@
 import { HeroTitle, Reveal, Stagger } from "@/components/motion";
-import { PageShell } from "@/components/page-shell";
 import { QuerySelect } from "@/components/query-select";
 import { RecipeCard } from "@/components/recipe-card";
 import { SupabaseSetupNotice } from "@/components/supabase-setup-notice";
@@ -14,6 +13,7 @@ import {
   timeFilterOptions,
 } from "@/lib/content-options";
 import { getSavedRecipeEntries } from "@/lib/data";
+import { getServerTranslator } from "@/lib/i18n/server";
 import { DEFAULT_PAGE_SIZE, paginate, readCursorParam } from "@/lib/pagination";
 import { firstSearchParam, pathWithSearchParams, type SearchParamRecord } from "@/lib/search-params";
 
@@ -25,6 +25,7 @@ export default async function SavedRecipesPage({
   searchParams: Promise<SearchParamRecord>;
 }) {
   const params = await searchParams;
+  const t = await getServerTranslator();
   const cookingTime = normalizeCookingTimeFilter(firstSearchParam(params, "time"));
   const difficulty = normalizeDifficultyFilter(firstSearchParam(params, "difficulty"));
   const sort = normalizeRecipeSort(firstSearchParam(params, "sort"));
@@ -32,11 +33,9 @@ export default async function SavedRecipesPage({
 
   if (!auth.configured) {
     return (
-      <PageShell>
         <main className="page-main">
           <SupabaseSetupNotice title="შენახული რეცეპტები დროებით მიუწვდომელია" />
         </main>
-      </PageShell>
     );
   }
 
@@ -45,6 +44,14 @@ export default async function SavedRecipesPage({
     difficulty,
     sort,
   });
+  const timeOptions = timeFilterOptions.map((option) => ({
+    ...option,
+    href: pathWithSearchParams("/saved", params, { time: option.value, cursor: null }),
+  }));
+  const difficultyOptions = difficultyFilterOptions.map((option) => ({
+    ...option,
+    href: pathWithSearchParams("/saved", params, { difficulty: option.value, cursor: null }),
+  }));
   const paginableEntries = savedEntries.map((entry) => ({
     id: entry.recipe.id,
     createdAt: entry.savedAt,
@@ -53,34 +60,31 @@ export default async function SavedRecipesPage({
   const page = paginate(paginableEntries, readCursorParam(params), DEFAULT_PAGE_SIZE);
 
   return (
-    <PageShell>
       <main className="page-main">
         <Reveal as="section" className="hero-panel min-h-[200px] md:min-h-[260px]">
-          <p className="eyebrow">შენახული</p>
+          <p className="eyebrow">{t("შენახული")}</p>
           <h1 className="text-[clamp(34px,5vw,74px)] font-black leading-none tracking-normal">
-            <HeroTitle text="შენახული რეცეპტები" />
+            <HeroTitle text={t("შენახული რეცეპტები")} />
           </h1>
           <p className="mt-3 max-w-2xl text-sm font-medium leading-relaxed text-muted md:mt-4 md:text-base">
-            რეცეპტები, რომლებსაც მოგვიანებით დაუბრუნდები.
+            {t("რეცეპტები, რომლებსაც მოგვიანებით დაუბრუნდები.")}
           </p>
           <span className="hero-watermark">Saved</span>
         </Reveal>
 
         <div className="soft-card mt-6 flex flex-col gap-4 overflow-hidden rounded-[24px] p-3 md:rounded-[26px] md:p-4">
           <div className="min-w-0">
-            <span className="mb-2 block text-xs font-black text-muted">მომზადების დრო</span>
+            <span className="mb-2 block text-xs font-black text-muted">{t("მომზადების დრო")}</span>
             <FilterChips
-              items={timeFilterOptions}
+              items={timeOptions}
               active={cookingTime ?? "all"}
-              getHref={(value) => pathWithSearchParams("/saved", params, { time: value, cursor: null })}
             />
           </div>
           <div className="min-w-0">
-            <span className="mb-2 block text-xs font-black text-muted">სირთულე</span>
+            <span className="mb-2 block text-xs font-black text-muted">{t("სირთულე")}</span>
             <FilterChips
-              items={difficultyFilterOptions}
+              items={difficultyOptions}
               active={difficulty ?? "all"}
-              getHref={(value) => pathWithSearchParams("/saved", params, { difficulty: value, cursor: null })}
             />
           </div>
           <div className="w-full max-w-xs">
@@ -117,6 +121,5 @@ export default async function SavedRecipesPage({
           </div>
         )}
       </main>
-    </PageShell>
   );
 }

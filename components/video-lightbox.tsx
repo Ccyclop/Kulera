@@ -3,6 +3,7 @@
 import { Play } from "lucide-react";
 import { useMemo, useState } from "react";
 import { FocusDialog } from "@/components/focus-dialog";
+import { useI18n } from "@/components/i18n-provider";
 import { resolveVideoSource } from "@/lib/video";
 
 export function VideoLightboxTrigger({
@@ -16,6 +17,7 @@ export function VideoLightboxTrigger({
 }) {
   const [open, setOpen] = useState(false);
   const source = useMemo(() => resolveVideoSource(videoUrl), [videoUrl]);
+  const { t } = useI18n();
 
   if (!source) return null;
 
@@ -33,7 +35,7 @@ export function VideoLightboxTrigger({
         <span className="grid h-7 w-7 place-items-center rounded-full bg-clay text-white">
           <Play className="h-3 w-3 fill-current" />
         </span>
-        ვიდეო რეცეპტი
+        {t("ვიდეო რეცეპტი")}
       </button>
 
       {open ? (
@@ -43,7 +45,7 @@ export function VideoLightboxTrigger({
           className="!max-w-4xl !border-transparent !bg-ink !p-3"
         >
           <h2 id="video-lightbox-title" className="sr-only">
-            {title} — ვიდეო რეცეპტი
+            {t("{title} — ვიდეო რეცეპტი", { title })}
           </h2>
           <div className="relative aspect-video w-full overflow-hidden rounded-[18px] bg-black">
             {source.kind === "file" ? (
@@ -57,7 +59,7 @@ export function VideoLightboxTrigger({
             ) : source.kind === "youtube" || source.kind === "vimeo" ? (
               <iframe
                 src={source.embedSrc}
-                title={`${title} ვიდეო`}
+                title={t("{title} ვიდეო", { title })}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 className="h-full w-full"
@@ -73,13 +75,13 @@ export function VideoLightboxTrigger({
             )}
           </div>
           <div className="mt-3 flex items-center justify-between gap-2">
-            <span className="text-xs font-extrabold uppercase tracking-wider text-white/60">ვიდეო რეცეპტი</span>
+            <span className="text-xs font-extrabold uppercase tracking-wider text-white/60">{t("ვიდეო რეცეპტი")}</span>
             <button
               type="button"
               onClick={() => setOpen(false)}
               className="inline-flex min-h-9 items-center justify-center rounded-full bg-white px-4 text-xs font-black text-ink"
             >
-              დახურვა
+              {t("დახურვა")}
             </button>
           </div>
         </FocusDialog>

@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { CategoryCard } from "@/components/category-card";
 import { HeroTitle, Reveal, Stagger } from "@/components/motion";
-import { PageShell } from "@/components/page-shell";
 import { QuerySelect } from "@/components/query-select";
 import { RecipeCard } from "@/components/recipe-card";
 import { EmptyState, FilterChips, Pagination, SidebarCard, SkeletonRecipeCard } from "@/components/ui";
@@ -14,6 +13,8 @@ import {
   timeFilterOptions,
 } from "@/lib/content-options";
 import { getCategories, getCategoryBySlug, getRecipesByCategoryId } from "@/lib/data";
+import { getLocale, getServerTranslator } from "@/lib/i18n/server";
+import { formatRecipeCount, localizeCategory, translateDifficulty } from "@/lib/i18n/shared";
 import { DEFAULT_PAGE_SIZE, paginate, readCursorParam } from "@/lib/pagination";
 import { firstSearchParam, pathWithSearchParams, type SearchParamRecord } from "@/lib/search-params";
 
@@ -28,6 +29,7 @@ export default async function CategoryPage({
 }) {
   const { slug } = await params;
   const queryParams = await searchParams;
+  const [locale, t] = await Promise.all([getLocale(), getServerTranslator()]);
   const cookingTime = normalizeCookingTimeFilter(firstSearchParam(queryParams, "time"));
   const difficulty = normalizeDifficultyFilter(firstSearchParam(queryParams, "difficulty"));
   const sort = normalizeRecipeSort(firstSearchParam(queryParams, "sort"));
@@ -36,6 +38,7 @@ export default async function CategoryPage({
   if (!category) {
     notFound();
   }
+  const localizedCategory = localizeCategory(locale, category);
 
   const categoryRecipes = await getRecipesByCategoryId(category.id, {
     cookingTime,
@@ -44,25 +47,32 @@ export default async function CategoryPage({
   });
   const page = paginate(categoryRecipes, readCursorParam(queryParams), DEFAULT_PAGE_SIZE);
   const pathname = `/categories/${slug}`;
+  const timeOptions = timeFilterOptions.map((option) => ({
+    ...option,
+    href: pathWithSearchParams(pathname, queryParams, { time: option.value, cursor: null }),
+  }));
+  const difficultyOptions = difficultyFilterOptions.map((option) => ({
+    ...option,
+    href: pathWithSearchParams(pathname, queryParams, { difficulty: option.value, cursor: null }),
+  }));
 
   return (
-    <PageShell>
       <main className="page-main">
         <Reveal as="section" className="mb-6 flex flex-col gap-5 xl:mb-8 xl:grid xl:gap-7 xl:grid-cols-[minmax(0,1fr)_340px]">
           <div className="hero-panel min-h-[220px] md:min-h-[300px]">
-            <p className="eyebrow">კატეგორია</p>
+            <p className="eyebrow">{t("კატეგორია")}</p>
             <h1 className="text-[clamp(34px,5vw,74px)] font-black leading-none tracking-normal">
-              <HeroTitle text={`${category.name} რეცეპტები`} />
+              <HeroTitle text={t("{category} რეცეპტები", { category: localizedCategory.name })} />
             </h1>
-            <p className="mt-3 max-w-2xl text-sm font-medium leading-relaxed text-muted md:mt-4 md:text-base">{category.description}</p>
-            <div className="mt-4 text-sm font-black text-clay md:mt-6">{categoryRecipes.length || category.recipeCount} რეცეპტი</div>
-            <span className="hero-watermark">{category.name}</span>
+            <p className="mt-3 max-w-2xl text-sm font-medium leading-relaxed text-muted md:mt-4 md:text-base">{localizedCategory.description}</p>
+            <div className="mt-4 text-sm font-black text-clay md:mt-6">{formatRecipeCount(locale, categoryRecipes.length || category.recipeCount)}</div>
+            <span className="hero-watermark">{localizedCategory.name}</span>
           </div>
           <aside className="soft-card hidden content-between rounded-[26px] p-5 xl:grid">
             <div>
-              <strong className="block text-xl font-black leading-tight">ამ კატეგორიაში</strong>
+              <strong className="block text-xl font-black leading-tight">{t("ამ კატეგორიაში")}</strong>
               <p className="mt-2 text-sm leading-relaxed text-muted">
-                დაალაგე პოპულარობით, რეიტინგით ან მომზადების დროით.
+                {t("დაალაგე პოპულარობით, რეიტინგით ან მომზადების დროით.")}
               </p>
             </div>
           </aside>
@@ -72,19 +82,17 @@ export default async function CategoryPage({
           <div className="min-w-0">
             <div className="soft-card mb-5 flex flex-col gap-4 overflow-hidden rounded-[24px] p-3 md:rounded-[26px] md:p-4">
               <div className="min-w-0">
-                <span className="mb-2 block text-xs font-black text-muted">მომზადების დრო</span>
+                <span className="mb-2 block text-xs font-black text-muted">{t("მომზადების დრო")}</span>
                 <FilterChips
-                  items={timeFilterOptions}
+                  items={timeOptions}
                   active={cookingTime ?? "all"}
-                  getHref={(value) => pathWithSearchParams(pathname, queryParams, { time: value, cursor: null })}
                 />
               </div>
               <div className="min-w-0">
-                <span className="mb-2 block text-xs font-black text-muted">სირთულე</span>
+                <span className="mb-2 block text-xs font-black text-muted">{t("სირთულე")}</span>
                 <FilterChips
-                  items={difficultyFilterOptions}
+                  items={difficultyOptions}
                   active={difficulty ?? "all"}
-                  getHref={(value) => pathWithSearchParams(pathname, queryParams, { difficulty: value, cursor: null })}
                 />
               </div>
               <div className="w-full max-w-xs">
@@ -139,17 +147,16 @@ export default async function CategoryPage({
                     <p key={recipe.id}>
                       <strong className="text-ink">{recipe.title}</strong>
                       <br />
-                      {recipe.cookingTime} წთ • {recipe.difficulty}
+                      {recipe.cookingTime} {t("წთ")} • {translateDifficulty(locale, recipe.difficulty)}
                     </p>
                   ))}
                 </div>
               ) : (
-                <p>ამ კატეგორიის იდეები აქ გამოჩნდება, როცა რეცეპტები დაემატება.</p>
+                <p>{t("ამ კატეგორიის იდეები აქ გამოჩნდება, როცა რეცეპტები დაემატება.")}</p>
               )}
             </SidebarCard>
           </aside>
         </section>
       </main>
-    </PageShell>
   );
 }

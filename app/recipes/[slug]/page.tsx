@@ -6,7 +6,6 @@ import { BookmarkToggle } from "@/components/bookmark-toggle";
 import { CommentThread } from "@/components/comment-thread";
 import { IngredientsPanel } from "@/components/ingredients-panel";
 import { HeroTitle, Reveal, Stagger } from "@/components/motion";
-import { PageShell } from "@/components/page-shell";
 import { RatingWidget } from "@/components/rating-widget";
 import { RecipeCard } from "@/components/recipe-card";
 import { ShareButton } from "@/components/share-button";
@@ -20,13 +19,15 @@ import {
   getUserRecipeRating,
   isRecipeSavedBy,
 } from "@/lib/data";
+import { getLocale, getServerTranslator } from "@/lib/i18n/server";
+import { formatMinutes, formatRatingCount, translateCategoryName } from "@/lib/i18n/shared";
 import { parseServingsCount } from "@/lib/ingredients";
 
 export const dynamic = "force-dynamic";
 
 export default async function RecipeDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const recipe = await getRecipeBySlug(slug);
+  const [recipe, locale, t] = await Promise.all([getRecipeBySlug(slug), getLocale(), getServerTranslator()]);
 
   if (!recipe) {
     notFound();
@@ -43,43 +44,42 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ s
   ]);
 
   return (
-    <PageShell>
       <main className="page-main">
         <Link href="/" className="mb-5 inline-flex items-center gap-2 text-[13px] font-extrabold text-muted no-underline">
           <ArrowLeft className="h-4 w-4" />
-          რეცეპტებში დაბრუნება
+          {t("რეცეპტებში დაბრუნება")}
         </Link>
 
         <Reveal as="section" className="grid gap-6 xl:grid-cols-[minmax(480px,.96fr)_minmax(440px,1.04fr)]">
           <div className="hero-panel flex min-h-[540px] flex-col justify-between">
             <div>
               <p className="eyebrow">
-                {recipe.categoryName} • ოჯახური სადილი
+                {t("{category} • ოჯახური სადილი", { category: translateCategoryName(locale, recipe.categoryName) })}
               </p>
               <h1 className="max-w-3xl text-[clamp(42px,5vw,78px)] font-black leading-[0.99] tracking-normal">
                 <HeroTitle text={recipe.title} stagger={0.025} />
               </h1>
               <p className="mt-6 max-w-2xl text-[17px] font-medium leading-relaxed text-muted">{recipe.description}</p>
-              <Badge className="mt-5">{recipe.categoryName} სამზარეულო</Badge>
+              <Badge className="mt-5">{t("{category} სამზარეულო", { category: translateCategoryName(locale, recipe.categoryName) })}</Badge>
             </div>
 
             <div>
               <div className="mt-8 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="rounded-[17px] border border-oat bg-[#FAF6F0] p-4">
                   <strong className="block text-lg font-black leading-none">{recipe.rating}</strong>
-                  <span className="mt-2 block text-[11px] font-extrabold text-muted">საშუალო შეფასება</span>
+                  <span className="mt-2 block text-[11px] font-extrabold text-muted">{t("საშუალო შეფასება")}</span>
                 </div>
                 <div className="rounded-[17px] border border-oat bg-[#FAF6F0] p-4">
                   <strong className="block text-lg font-black leading-none">{recipe.ratingsCount}</strong>
-                  <span className="mt-2 block text-[11px] font-extrabold text-muted">შეფასება</span>
+                  <span className="mt-2 block text-[11px] font-extrabold text-muted">{t("შეფასება")}</span>
                 </div>
                 <div className="rounded-[17px] border border-oat bg-[#FAF6F0] p-4">
-                  <strong className="block text-lg font-black leading-none">{recipe.cookingTime} წთ</strong>
-                  <span className="mt-2 block text-[11px] font-extrabold text-muted">მომზადების დრო</span>
+                  <strong className="block text-lg font-black leading-none">{formatMinutes(locale, recipe.cookingTime)}</strong>
+                  <span className="mt-2 block text-[11px] font-extrabold text-muted">{t("მომზადების დრო")}</span>
                 </div>
                 <div className="rounded-[17px] border border-oat bg-[#FAF6F0] p-4">
                   <strong className="block text-lg font-black leading-none">{recipe.servings}</strong>
-                  <span className="mt-2 block text-[11px] font-extrabold text-muted">პორცია</span>
+                  <span className="mt-2 block text-[11px] font-extrabold text-muted">{t("პორცია")}</span>
                 </div>
               </div>
               <div className="mt-8 flex flex-wrap gap-2">
@@ -111,9 +111,9 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ s
           <div className="grid gap-5">
             <article className="soft-card rounded-[28px] p-5 md:p-8">
               <div className="mb-6">
-                <h2 className="text-[28px] font-black leading-tight">მომზადების ნაბიჯები</h2>
+                <h2 className="text-[28px] font-black leading-tight">{t("მომზადების ნაბიჯები")}</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
-                  ნაბიჯები მოკლეა, მაგრამ საკმარისად კონკრეტული, რომ რეცეპტი რეალურად გამოიყენო სამზარეულოში.
+                  {t("ნაბიჯები მოკლეა, მაგრამ საკმარისად კონკრეტული, რომ რეცეპტი რეალურად გამოიყენო სამზარეულოში.")}
                 </p>
               </div>
               <ol className="grid gap-0">
@@ -134,8 +134,8 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ s
             {recipe.tips.length > 0 ? (
               <article className="soft-card rounded-[28px] p-5 md:p-8">
                 <div className="mb-6">
-                  <h2 className="text-[28px] font-black leading-tight">Tips / notes</h2>
-                  <p className="mt-2 text-sm leading-relaxed text-muted">პატარა დეტალები, რომლებიც გემოს ცვლის.</p>
+                  <h2 className="text-[28px] font-black leading-tight">{t("Tips / notes")}</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">{t("პატარა დეტალები, რომლებიც გემოს ცვლის.")}</p>
                 </div>
                 <div className="grid gap-3 lg:grid-cols-3">
                   {recipe.tips.map((tip) => (
@@ -149,12 +149,12 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ s
             ) : null}
 
             <article className="soft-card rounded-[28px] p-5 md:p-6">
-              <h2 className="text-[23px] font-black leading-tight">შეაფასე რეცეპტი</h2>
+              <h2 className="text-[23px] font-black leading-tight">{t("შეაფასე რეცეპტი")}</h2>
               <div className="mt-5 grid gap-4 rounded-[22px] border border-oat bg-[#FAF6F0] p-5 md:grid-cols-[auto_1fr] md:items-center">
                 <div>
                   <div className="text-[42px] font-black leading-none">{recipe.rating}</div>
                   <RatingStars value={recipe.rating} className="mt-2 text-[18px]" />
-                  <p className="mt-2 text-xs font-extrabold text-muted">{recipe.ratingsCount} შეფასება</p>
+                  <p className="mt-2 text-xs font-extrabold text-muted">{formatRatingCount(locale, recipe.ratingsCount)}</p>
                 </div>
                 <RatingWidget
                   recipeId={recipe.id}
@@ -179,8 +179,8 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ s
         <section className="mt-10">
           <div className="section-title mt-0">
             <div>
-              <h2>მსგავსი რეცეპტები</h2>
-              <p>თუ ეს გემო მოგწონს, ეს არჩევანიც ახლოს არის.</p>
+              <h2>{t("მსგავსი რეცეპტები")}</h2>
+              <p>{t("თუ ეს გემო მოგწონს, ეს არჩევანიც ახლოს არის.")}</p>
             </div>
           </div>
           <Stagger as="div" className="grid gap-4 md:grid-cols-3" stagger={0.08}>
@@ -190,6 +190,5 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ s
           </Stagger>
         </section>
       </main>
-    </PageShell>
   );
 }

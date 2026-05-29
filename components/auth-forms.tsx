@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 import { Lock, Mail } from "lucide-react";
+import { useI18n } from "@/components/i18n-provider";
 import { Button, FormInput } from "@/components/ui";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/client";
@@ -17,11 +18,13 @@ function usernameFromEmail(email: string) {
 }
 
 function AuthMessage({ error, message }: { error?: string | null; message?: string | null }) {
+  const { t } = useI18n();
+
   if (!error && !message) return null;
 
   return (
     <p className={error ? "rounded-2xl border border-danger/20 bg-danger/10 p-3 text-sm font-bold text-danger" : "rounded-2xl border border-sage-light bg-sage-light p-3 text-sm font-bold text-sage"}>
-      {error ?? message}
+      {t(error ?? message ?? "")}
     </p>
   );
 }
@@ -36,11 +39,11 @@ function safeRedirectPath(value: string | null, fallback = "/account") {
 
 function loginQueryError(error: string | null) {
   if (error === "invalid-confirmation-link") {
-    return "Confirmation link is invalid or expired.";
+    return "დადასტურების ბმული არასწორია ან ვადაგასულია.";
   }
 
   if (error === "oauth-callback-failed") {
-    return "Google sign-in could not be completed. Try again.";
+    return "Google-ით შესვლა ვერ დასრულდა. სცადე თავიდან.";
   }
 
   if (error === "supabase-env-missing") {
@@ -52,17 +55,19 @@ function loginQueryError(error: string | null) {
 
 function loginQueryMessage(accountDeleted: string | null) {
   if (accountDeleted === "1") {
-    return "Account deleted.";
+    return "ანგარიში წაიშალა.";
   }
 
   return null;
 }
 
 function AuthDivider() {
+  const { t } = useI18n();
+
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-[11px] font-black uppercase tracking-normal text-muted/85">
       <span className="h-px bg-oat" />
-      <span>or</span>
+      <span>{t("ან")}</span>
       <span className="h-px bg-oat" />
     </div>
   );
@@ -102,6 +107,7 @@ function GoogleAuthButton({
 }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useI18n();
 
   async function handleGoogleAuth() {
     setError(null);
@@ -141,7 +147,7 @@ function GoogleAuthButton({
         <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-oat bg-white">
           <GoogleIcon />
         </span>
-        <span>{pending ? "Redirecting..." : label}</span>
+        <span>{pending ? t("გადამისამართება...") : t(label)}</span>
       </Button>
       <AuthMessage error={error} />
     </div>
@@ -157,6 +163,7 @@ export function LoginForm() {
   const configured = hasSupabaseConfig();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const { t } = useI18n();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -188,26 +195,26 @@ export function LoginForm() {
   return (
     <>
       <div className="mt-5 grid gap-4">
-        <GoogleAuthButton configured={configured} label="Continue with Google" redirectTo={redirectTo} />
+        <GoogleAuthButton configured={configured} label="Google-ით გაგრძელება" redirectTo={redirectTo} />
         <AuthDivider />
       </div>
       <form className="mt-5 grid gap-4" onSubmit={handleSubmit}>
         <FormInput label="Email" name="email" type="email" placeholder="you@example.com" required />
-        <FormInput label="Password" name="password" type="password" placeholder="••••••••" required />
+        <FormInput label="პაროლი" name="password" type="password" placeholder="••••••••" required />
         <AuthMessage error={error ?? loginQueryError(queryError)} message={!error ? loginQueryMessage(accountDeleted) : null} />
         <Button type="submit" disabled={pending || !configured}>
           <Lock className="h-4 w-4" />
-          {pending ? "Signing in..." : "Login"}
+          {pending ? "შედიხარ..." : "შესვლა"}
         </Button>
       </form>
       <div className="mt-4 flex justify-between gap-3 text-[13px] font-extrabold text-muted">
-        <Link href="/register">რეგისტრაცია</Link>
-        <Link href="/forgot-password">პაროლის აღდგენა</Link>
+        <Link href="/register">{t("რეგისტრაცია")}</Link>
+        <Link href="/forgot-password">{t("პაროლის აღდგენა")}</Link>
       </div>
       {!configured ? (
         <p className="mt-5 flex items-center gap-2 text-xs font-bold text-muted">
           <Mail className="h-4 w-4 text-clay" />
-          ავტორიზაცია ამ მომენტში მიუწვდომელია.
+          {t("ავტორიზაცია ამ მომენტში მიუწვდომელია.")}
         </p>
       ) : null}
     </>
@@ -220,6 +227,7 @@ export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const { t } = useI18n();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -238,7 +246,7 @@ export function RegisterForm() {
     const confirmPassword = String(formData.get("confirmPassword") ?? "");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError("პაროლები ერთმანეთს არ ემთხვევა.");
       return;
     }
 
@@ -270,27 +278,27 @@ export function RegisterForm() {
       return;
     }
 
-    setMessage("Check your email to confirm registration, then log in.");
+    setMessage("რეგისტრაციის დასადასტურებლად შეამოწმე email, შემდეგ შედი.");
   }
 
   return (
     <>
       <div className="mt-5 grid gap-4">
-        <GoogleAuthButton configured={configured} label="Register with Google" />
+        <GoogleAuthButton configured={configured} label="Google-ით რეგისტრაცია" />
         <AuthDivider />
       </div>
       <form className="mt-5 grid gap-4" onSubmit={handleSubmit}>
-        <FormInput label="Name" name="fullName" placeholder="სახელი და გვარი" required />
+        <FormInput label="სახელი" name="fullName" placeholder="სახელი და გვარი" required />
         <FormInput label="Email" name="email" type="email" placeholder="you@example.com" required />
-        <FormInput label="Password" name="password" type="password" placeholder="••••••••" minLength={6} required />
-        <FormInput label="Confirm password" name="confirmPassword" type="password" placeholder="••••••••" minLength={6} required />
+        <FormInput label="პაროლი" name="password" type="password" placeholder="••••••••" minLength={6} required />
+        <FormInput label="გაიმეორე პაროლი" name="confirmPassword" type="password" placeholder="••••••••" minLength={6} required />
         <AuthMessage error={error} message={message} />
         <Button type="submit" disabled={pending || !configured}>
-          {pending ? "Registering..." : "Register"}
+          {pending ? "რეგისტრირდება..." : "დარეგისტრირება"}
         </Button>
       </form>
       <div className="mt-4 text-[13px] font-extrabold text-muted">
-        უკვე გაქვს ანგარიში? <Link href="/login">შესვლა</Link>
+        {t("უკვე გაქვს ანგარიში?")} <Link href="/login">{t("შესვლა")}</Link>
       </div>
     </>
   );
@@ -301,6 +309,7 @@ export function ForgotPasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const { t } = useI18n();
   const redirectTo = useMemo(() => {
     if (typeof window === "undefined") return "";
     return `${window.location.origin}/account`;
@@ -331,7 +340,7 @@ export function ForgotPasswordForm() {
       return;
     }
 
-    setMessage("Password reset email sent.");
+    setMessage("პაროლის აღდგენის ბმული გაიგზავნა.");
   }
 
   return (
@@ -340,11 +349,11 @@ export function ForgotPasswordForm() {
         <FormInput label="Email" name="email" type="email" placeholder="you@example.com" required />
         <AuthMessage error={error} message={message} />
         <Button type="submit" disabled={pending || !configured}>
-          {pending ? "Sending..." : "Submit"}
+          {pending ? "იგზავნება..." : "გაგზავნა"}
         </Button>
       </form>
       <div className="mt-4 text-[13px] font-extrabold text-muted">
-        <Link href="/login">Back to Login</Link>
+        <Link href="/login">{t("შესვლაზე დაბრუნება")}</Link>
       </div>
     </>
   );

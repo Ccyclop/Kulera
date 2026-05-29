@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { motion, useMotionTemplate, useMotionValue, useReducedMotion } from "framer-motion";
 import { useRef, type PointerEvent } from "react";
+import { useI18n } from "@/components/i18n-provider";
+import { formatRecipeCount, localizeCategory } from "@/lib/i18n/shared";
 import type { Category } from "@/lib/types";
 
 const cardSpring = { type: "spring" as const, stiffness: 300, damping: 28, mass: 0.7 };
@@ -12,6 +14,8 @@ const cardRadius = "rounded-[22px_22px_22px_6px]";
 export function CategoryCard({ category }: { category: Category }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const shouldReduceMotion = useReducedMotion();
+  const { locale } = useI18n();
+  const localized = localizeCategory(locale, category);
   const glowX = useMotionValue(50);
   const glowY = useMotionValue(50);
   const background = useMotionTemplate`radial-gradient(190px circle at ${glowX}% ${glowY}%, rgba(182,84,45,0.14), transparent 68%)`;
@@ -84,9 +88,9 @@ export function CategoryCard({ category }: { category: Category }) {
           </div>
           <span>
             <strong className="block text-[15px] font-black leading-tight transition-colors duration-200 group-hover:text-clay">
-              {category.name}
+              {localized.name}
             </strong>
-            <span className="mt-1.5 block text-xs font-bold text-muted">{category.recipeCount} რეცეპტი</span>
+            <span className="mt-1.5 block text-xs font-bold text-muted">{formatRecipeCount(locale, category.recipeCount)}</span>
           </span>
         </div>
       </Link>

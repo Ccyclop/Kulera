@@ -2,11 +2,15 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useI18n } from "@/components/i18n-provider";
 import type { Cook } from "@/lib/types";
+import { formatRatingCount, formatRecipeCount, translateCookBadge } from "@/lib/i18n/shared";
 import { cookScore } from "@/lib/ranking";
 import { Badge, RatingStars } from "./ui";
 
 export function CookCard({ cook, rank, featured = false }: { cook: Cook; rank: number; featured?: boolean }) {
+  const { locale, t } = useI18n();
+
   return (
     <motion.div
       whileHover={{ y: -6, scale: 1.012 }}
@@ -42,7 +46,7 @@ export function CookCard({ cook, rank, featured = false }: { cook: Cook; rank: n
         <div>
           <div className="flex flex-wrap gap-2">
             {cook.badges.slice(0, 2).map((badge) => (
-              <Badge key={badge}>{badge}</Badge>
+              <Badge key={badge}>{translateCookBadge(locale, badge)}</Badge>
             ))}
           </div>
           <h3 className="mt-4 text-xl font-black leading-tight transition-colors duration-200 group-hover:text-clay">
@@ -53,14 +57,14 @@ export function CookCard({ cook, rank, featured = false }: { cook: Cook; rank: n
             <span className="inline-flex items-center gap-1">
               <RatingStars value={cook.averageRating} /> {cook.averageRating.toFixed(1)}
             </span>
-            <span>{cook.totalRecipes} რეცეპტი</span>
-            <span>{cook.totalRatings} შეფასება</span>
+            <span>{formatRecipeCount(locale, cook.totalRecipes)}</span>
+            <span>{formatRatingCount(locale, cook.totalRatings)}</span>
           </div>
         </div>
 
         <div className={featured ? "mt-5 border-t border-oat pt-4" : "md:text-right"}>
-          <span className="block text-[11px] font-black uppercase tracking-normal text-muted">საუკეთესო რეცეპტი</span>
-          <strong className="mt-1 block max-w-[220px] text-sm font-black leading-snug">{cook.mostPopularRecipe}</strong>
+          <span className="block text-[11px] font-black uppercase tracking-normal text-muted">{t("საუკეთესო რეცეპტი")}</span>
+          <strong className="mt-1 block max-w-[220px] text-sm font-black leading-snug">{t(cook.mostPopularRecipe)}</strong>
           <span className="mt-2 block text-xs font-extrabold text-clay">Score {cookScore(cook).toFixed(1)}</span>
         </div>
       </Link>

@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
+import { useI18n } from "@/components/i18n-provider";
 import { cn } from "@/lib/cn";
 
 export function FormToast({
@@ -10,6 +11,8 @@ export function FormToast({
   message?: string | null;
   toastKey?: number;
 }) {
+  const { t } = useI18n();
+
   if (!message) return null;
 
   return (
@@ -23,7 +26,7 @@ export function FormToast({
       )}
     >
       <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden />
-      <span>{message}</span>
+      <span>{t(message)}</span>
     </div>
   );
 }

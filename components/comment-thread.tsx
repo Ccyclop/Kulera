@@ -7,6 +7,7 @@ import { useFormStatus } from "react-dom";
 import { z } from "zod";
 import { MessageCircle, Trash2 } from "lucide-react";
 import { FormToast } from "@/components/form-toast";
+import { useI18n } from "@/components/i18n-provider";
 import { addComment, deleteComment, type CommentActionState } from "@/lib/actions/social";
 import type { Comment } from "@/lib/types";
 import { commentFormSchema } from "@/lib/validation";
@@ -34,6 +35,7 @@ function errorMessage(error: unknown) {
 
 function DeleteCommentButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
+  const { t } = useI18n();
 
   return (
     <Button
@@ -41,10 +43,10 @@ function DeleteCommentButton({ label }: { label: string }) {
       variant="ghost"
       className="min-h-8 rounded-xl px-2 text-[11px] text-danger hover:bg-danger/10 hover:text-danger"
       disabled={pending}
-      aria-label={label}
+      aria-label={t(label)}
     >
       <Trash2 className="h-3.5 w-3.5" aria-hidden />
-      {pending ? "იშლება..." : "წაშლა"}
+      {pending ? t("იშლება...") : t("წაშლა")}
     </Button>
   );
 }
@@ -52,6 +54,7 @@ function DeleteCommentButton({ label }: { label: string }) {
 export function CommentThread({ comments, currentUserId, recipeId, recipeSlug }: CommentThreadProps) {
   const [state, formAction, actionPending] = useActionState(addComment, initialState);
   const [transitionPending, startTransition] = useTransition();
+  const { t } = useI18n();
   const isPending = actionPending || transitionPending;
   const {
     formState: { errors },
@@ -90,14 +93,14 @@ export function CommentThread({ comments, currentUserId, recipeId, recipeSlug }:
 
   return (
     <article className="soft-card rounded-[28px] p-5 md:p-6">
-      <h2 className="text-[23px] font-black leading-tight">კომენტარები</h2>
+      <h2 className="text-[23px] font-black leading-tight">{t("კომენტარები")}</h2>
       <form onSubmit={handleSubmit(submitForm)} className="mt-5 grid gap-3" noValidate>
         <input type="hidden" name="recipeId" value={recipeId} />
         <input type="hidden" name="recipeSlug" value={recipeSlug} />
         <input type="hidden" name="redirectTo" value={`/recipes/${recipeSlug}`} />
         <textarea
           className="field-control min-h-[120px] resize-y py-4"
-          placeholder="დატოვე შენიშვნა, ცვლილება ან კითხვა..."
+          placeholder={t("დატოვე შენიშვნა, ცვლილება ან კითხვა...")}
           maxLength={2000}
           aria-invalid={Boolean(bodyError)}
           aria-describedby={bodyError || state.formError ? "comment-form-error" : undefined}
@@ -106,12 +109,12 @@ export function CommentThread({ comments, currentUserId, recipeId, recipeSlug }:
         />
         {bodyError || state.formError ? (
           <p id="comment-form-error" className="text-xs font-extrabold text-danger" role={state.formError ? "alert" : undefined} aria-live="polite">
-            {bodyError ?? state.formError}
+            {t(bodyError ?? state.formError ?? "")}
           </p>
         ) : null}
         <Button type="submit" className="justify-self-start" disabled={isPending}>
           <MessageCircle className="h-4 w-4" aria-hidden />
-          {isPending ? "იგზავნება..." : "კომენტარის დამატება"}
+          {isPending ? t("იგზავნება...") : t("კომენტარის დამატება")}
         </Button>
       </form>
       <FormToast message={state.message} toastKey={state.toastKey} />
@@ -119,7 +122,7 @@ export function CommentThread({ comments, currentUserId, recipeId, recipeSlug }:
       <div className="mt-5 grid">
         {comments.length === 0 ? (
           <p className="rounded-[22px] border border-oat bg-[#FAF6F0] p-4 text-sm font-bold leading-relaxed text-muted">
-            კომენტარი ჯერ არ არის.
+            {t("კომენტარი ჯერ არ არის.")}
           </p>
         ) : null}
         {comments.map((comment) => {
@@ -138,7 +141,7 @@ export function CommentThread({ comments, currentUserId, recipeId, recipeSlug }:
                       <input type="hidden" name="commentId" value={comment.id} />
                       <input type="hidden" name="recipeSlug" value={recipeSlug} />
                       <input type="hidden" name="redirectTo" value={`/recipes/${recipeSlug}`} />
-                      <DeleteCommentButton label={`წაშლა: ${comment.author} კომენტარი`} />
+                      <DeleteCommentButton label={t("წაშლა: {author} კომენტარი", { author: comment.author })} />
                     </form>
                   ) : null}
                 </div>

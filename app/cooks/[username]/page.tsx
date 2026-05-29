@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { HeroTitle, Reveal, Stagger } from "@/components/motion";
-import { PageShell } from "@/components/page-shell";
 import { QuerySelect } from "@/components/query-select";
 import { RecipeCard } from "@/components/recipe-card";
 import { Badge, EmptyState, FilterChips, Pagination, RatingStars, Tabs } from "@/components/ui";
@@ -13,6 +12,8 @@ import {
   timeFilterOptions,
 } from "@/lib/content-options";
 import { getCookByUsername, getRecipesByCook } from "@/lib/data";
+import { getLocale, getServerTranslator } from "@/lib/i18n/server";
+import { translateCookBadge } from "@/lib/i18n/shared";
 import { DEFAULT_PAGE_SIZE, paginate, readCursorParam } from "@/lib/pagination";
 import { firstSearchParam, pathWithSearchParams, type SearchParamRecord } from "@/lib/search-params";
 
@@ -27,6 +28,7 @@ export default async function CookProfilePage({
 }) {
   const { username } = await params;
   const queryParams = await searchParams;
+  const [locale, t] = await Promise.all([getLocale(), getServerTranslator()]);
   const cookingTime = normalizeCookingTimeFilter(firstSearchParam(queryParams, "time"));
   const difficulty = normalizeDifficultyFilter(firstSearchParam(queryParams, "difficulty"));
   const sortParam = firstSearchParam(queryParams, "sort");
@@ -50,9 +52,16 @@ export default async function CookProfilePage({
     { label: "მაღალი შეფასება", value: "top-rated", href: pathWithSearchParams(pathname, queryParams, { sort: "top-rated", cursor: null }) },
     { label: "ახალი", value: "latest", href: pathWithSearchParams(pathname, queryParams, { sort: "newest", cursor: null }) },
   ];
+  const timeOptions = timeFilterOptions.map((option) => ({
+    ...option,
+    href: pathWithSearchParams(pathname, queryParams, { time: option.value, cursor: null }),
+  }));
+  const difficultyOptions = difficultyFilterOptions.map((option) => ({
+    ...option,
+    href: pathWithSearchParams(pathname, queryParams, { difficulty: option.value, cursor: null }),
+  }));
 
   return (
-    <PageShell>
       <main className="page-main">
         <Reveal as="section" className="hero-panel min-h-[260px] md:min-h-[300px]">
           <div className="grid gap-5 md:gap-6 lg:grid-cols-[96px_1fr_auto] lg:items-center">
@@ -60,14 +69,14 @@ export default async function CookProfilePage({
               {cook.avatarInitial}
             </div>
             <div className="min-w-0">
-              <p className="eyebrow">კულინარი</p>
+              <p className="eyebrow">{t("კულინარი")}</p>
               <h1 className="text-[clamp(32px,5vw,74px)] font-black leading-none tracking-normal">
                 <HeroTitle text={cook.fullName} />
               </h1>
               <p className="mt-3 max-w-2xl text-sm font-medium leading-relaxed text-muted md:mt-4 md:text-base">{cook.bio}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {cook.badges.map((badge) => (
-                  <Badge key={badge}>{badge}</Badge>
+                  <Badge key={badge}>{translateCookBadge(locale, badge)}</Badge>
                 ))}
               </div>
             </div>
@@ -75,30 +84,28 @@ export default async function CookProfilePage({
               <span className="inline-flex items-center gap-2">
                 <RatingStars value={cook.averageRating} /> {cook.averageRating.toFixed(1)}
               </span>
-              <span>{cook.totalRecipes} დამატებული რეცეპტი</span>
-              <span>{cook.totalRatings} მიღებული შეფასება</span>
+              <span>{t("{count} დამატებული რეცეპტი", { count: cook.totalRecipes })}</span>
+              <span>{t("{count} მიღებული შეფასება", { count: cook.totalRatings })}</span>
             </div>
           </div>
-          <span className="hero-watermark">კულინარი</span>
+          <span className="hero-watermark">{t("კულინარი")}</span>
         </Reveal>
 
         <section className="mt-8">
           <Tabs items={tabs} active={activeTab} />
           <div className="soft-card mt-5 flex flex-col gap-4 overflow-hidden rounded-[24px] p-3 md:rounded-[26px] md:p-4">
             <div className="min-w-0">
-              <span className="mb-2 block text-xs font-black text-muted">მომზადების დრო</span>
+              <span className="mb-2 block text-xs font-black text-muted">{t("მომზადების დრო")}</span>
               <FilterChips
-                items={timeFilterOptions}
+                items={timeOptions}
                 active={cookingTime ?? "all"}
-                getHref={(value) => pathWithSearchParams(pathname, queryParams, { time: value, cursor: null })}
               />
             </div>
             <div className="min-w-0">
-              <span className="mb-2 block text-xs font-black text-muted">სირთულე</span>
+              <span className="mb-2 block text-xs font-black text-muted">{t("სირთულე")}</span>
               <FilterChips
-                items={difficultyFilterOptions}
+                items={difficultyOptions}
                 active={difficulty ?? "all"}
-                getHref={(value) => pathWithSearchParams(pathname, queryParams, { difficulty: value, cursor: null })}
               />
             </div>
             <div className="w-full max-w-xs">
@@ -130,6 +137,5 @@ export default async function CookProfilePage({
           </div>
         </section>
       </main>
-    </PageShell>
   );
 }

@@ -1,24 +1,23 @@
 import { CategoryCard } from "@/components/category-card";
 import { HeroTitle, Reveal, Stagger } from "@/components/motion";
-import { PageShell } from "@/components/page-shell";
 import { EmptyState } from "@/components/ui";
 import { getCategories } from "@/lib/data";
+import { getServerTranslator } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function CategoriesPage() {
-  const categories = await getCategories();
+  const [categories, t] = await Promise.all([getCategories(), getServerTranslator()]);
 
   return (
-    <PageShell>
       <main className="page-main">
         <Reveal as="section" className="hero-panel min-h-[200px] md:min-h-[280px]" variant="fadeUp">
-          <p className="eyebrow">კატეგორიები</p>
+          <p className="eyebrow">{t("კატეგორიები")}</p>
           <h1 className="text-[clamp(34px,5vw,74px)] font-black leading-none tracking-normal">
-            <HeroTitle text="ყველა კატეგორია" />
+            <HeroTitle text={t("ყველა კატეგორია")} />
           </h1>
           <p className="mt-3 max-w-2xl text-sm font-medium leading-relaxed text-muted md:mt-4 md:text-base">
-            აირჩიე რეცეპტები სიტუაციით, დროით ან იმ განწყობით, რაც დღეს სამზარეულოში გაქვს.
+            {t("აირჩიე რეცეპტები სიტუაციით, დროით ან იმ განწყობით, რაც დღეს სამზარეულოში გაქვს.")}
           </p>
           <span className="hero-watermark">Cats</span>
         </Reveal>
@@ -35,6 +34,5 @@ export default async function CategoriesPage() {
           )}
         </section>
       </main>
-    </PageShell>
   );
 }

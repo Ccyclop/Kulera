@@ -3,6 +3,7 @@
 import { Film, Link as LinkIcon, Upload, X } from "lucide-react";
 import { useId, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
+import { useI18n } from "@/components/i18n-provider";
 import { RECIPE_VIDEO_BUCKET, getRecipeVideoUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/client";
 import { resolveVideoSource } from "@/lib/video";
@@ -59,6 +60,7 @@ export function VideoUploader({
   const [linkError, setLinkError] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "uploading">("idle");
   const [error, setError] = useState<string | null>(null);
+  const { t } = useI18n();
 
   const update = (next: string | null) => {
     setStored(next);
@@ -140,7 +142,7 @@ export function VideoUploader({
 
   return (
     <div className="grid gap-2">
-      <span className="field-label">{label}</span>
+      <span className="field-label">{t(label)}</span>
 
       <div className="inline-flex w-fit gap-1 rounded-full border border-oat bg-paper/75 p-1">
         <button
@@ -152,7 +154,7 @@ export function VideoUploader({
           )}
         >
           <Upload className="h-3.5 w-3.5" aria-hidden />
-          ფაილი
+          {t("ფაილი")}
         </button>
         <button
           type="button"
@@ -177,7 +179,7 @@ export function VideoUploader({
             aria-describedby={helperId}
           >
             <Upload className="h-4 w-4" aria-hidden />
-            {status === "uploading" ? "იტვირთება…" : stored && !isLinkValue(stored) ? "სხვა ფაილის ატვირთვა" : "ვიდეო ფაილის ატვირთვა"}
+            {status === "uploading" ? t("იტვირთება…") : stored && !isLinkValue(stored) ? t("სხვა ფაილის ატვირთვა") : t("ვიდეო ფაილის ატვირთვა")}
           </button>
           <input
             ref={inputRef}
@@ -206,22 +208,22 @@ export function VideoUploader({
               onClick={applyLink}
               className="inline-flex min-h-12 items-center justify-center gap-1 rounded-[15px] border border-oat bg-surface px-4 text-xs font-black"
             >
-              დამატება
+              {t("დამატება")}
             </button>
           </div>
           {linkError ? (
-            <span className="text-xs font-extrabold text-danger">{linkError}</span>
+            <span className="text-xs font-extrabold text-danger">{t(linkError)}</span>
           ) : null}
         </div>
       )}
 
       <span id={helperId} className="text-xs leading-relaxed text-muted">
-        {helper}
+        {t(helper)}
       </span>
 
       {error ? (
         <span className="text-sm font-bold text-danger" role="alert">
-          {error}
+          {t(error)}
         </span>
       ) : null}
 
@@ -234,12 +236,12 @@ export function VideoUploader({
             <div className="grid">
               <strong className="text-sm font-black leading-tight">
                 {previewSource?.kind === "youtube"
-                  ? "YouTube ვიდეო დაკავშირებული"
+                  ? t("YouTube ვიდეო დაკავშირებული")
                   : previewSource?.kind === "vimeo"
-                    ? "Vimeo ვიდეო დაკავშირებული"
+                    ? t("Vimeo ვიდეო დაკავშირებული")
                     : isLinkValue(stored)
-                      ? "გარე ვიდეო ბმული"
-                      : "ვიდეო ფაილი ატვირთული"}
+                      ? t("გარე ვიდეო ბმული")
+                      : t("ვიდეო ფაილი ატვირთული")}
               </strong>
               <span className="text-xs text-muted truncate max-w-[260px]">
                 {isLinkValue(stored) ? stored : stored.split("/").pop()}
@@ -252,7 +254,7 @@ export function VideoUploader({
             className="inline-flex min-h-9 items-center gap-1 rounded-full bg-danger/10 px-3 text-xs font-black text-danger transition hover:bg-danger/15"
           >
             <X className="h-3.5 w-3.5" aria-hidden />
-            წაშლა
+            {t("წაშლა")}
           </button>
         </div>
       ) : null}

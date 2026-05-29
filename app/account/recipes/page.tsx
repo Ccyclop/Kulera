@@ -2,22 +2,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, FilePen, Pencil } from "lucide-react";
 import { HeroTitle, Reveal } from "@/components/motion";
-import { PageShell } from "@/components/page-shell";
 import { SupabaseSetupNotice } from "@/components/supabase-setup-notice";
 import { Badge, ButtonLink, EmptyState } from "@/components/ui";
 import { requireAuth } from "@/lib/auth";
 import { getOwnedRecipes } from "@/lib/data";
+import { getLocale, getServerTranslator } from "@/lib/i18n/server";
+import { formatMinutes, translateDifficulty, translateStatus } from "@/lib/i18n/shared";
 import type { Recipe } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const STATUS_LABEL: Record<Recipe["status"], string> = {
-  published: "გამოქვეყნებული",
-  draft: "მონახაზი",
-  archived: "არქივი",
-};
-
-function MyRecipeCard({ recipe }: { recipe: Recipe }) {
+function MyRecipeCard({ recipe, locale, t }: { recipe: Recipe; locale: Awaited<ReturnType<typeof getLocale>>; t: Awaited<ReturnType<typeof getServerTranslator>> }) {
   const isDraft = recipe.status === "draft";
   const primaryHref = isDraft ? `/recipes/${recipe.slug}/edit` : `/recipes/${recipe.slug}`;
 
@@ -42,19 +37,19 @@ function MyRecipeCard({ recipe }: { recipe: Recipe }) {
                   : "bg-oat text-muted"
             }
           >
-            {STATUS_LABEL[recipe.status]}
+            {translateStatus(locale, recipe.status)}
           </Badge>
         </span>
       </Link>
       <div className="flex flex-1 flex-col gap-3 p-4">
-        <h3 className="text-lg font-black leading-snug">{recipe.title || "უსათაურო მონახაზი"}</h3>
+        <h3 className="text-lg font-black leading-snug">{recipe.title || t("უსათაურო მონახაზი")}</h3>
         <p className="line-clamp-2 text-xs font-bold text-muted">
-          {recipe.description || "აღწერა ჯერ არ დაგიწერია."}
+          {recipe.description || t("აღწერა ჯერ არ დაგიწერია.")}
         </p>
         <div className="flex flex-wrap gap-2 text-[11px] font-black text-muted">
-          <span>{recipe.cookingTime} წთ</span>
+          <span>{formatMinutes(locale, recipe.cookingTime)}</span>
           <span>•</span>
-          <span>{recipe.difficulty}</span>
+          <span>{translateDifficulty(locale, recipe.difficulty)}</span>
           {recipe.status === "published" ? (
             <>
               <span>•</span>
@@ -78,15 +73,15 @@ function MyRecipeCard({ recipe }: { recipe: Recipe }) {
   );
 }
 
-function RecipeGroup({ title, hint, recipes }: { title: string; hint: string; recipes: Recipe[] }) {
+function RecipeGroup({ title, hint, recipes, locale, t }: { title: string; hint: string; recipes: Recipe[]; locale: Awaited<ReturnType<typeof getLocale>>; t: Awaited<ReturnType<typeof getServerTranslator>> }) {
   if (recipes.length === 0) return null;
 
   return (
     <section className="mt-8">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h2 className="text-[24px] font-black leading-tight md:text-[28px]">{title}</h2>
-          <p className="mt-1 text-sm leading-relaxed text-muted">{hint}</p>
+          <h2 className="text-[24px] font-black leading-tight md:text-[28px]">{t(title)}</h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted">{t(hint)}</p>
         </div>
         <span className="rounded-full border border-oat bg-surface px-3 py-1 text-xs font-black text-muted tabular-nums">
           {recipes.length}
@@ -94,7 +89,7 @@ function RecipeGroup({ title, hint, recipes }: { title: string; hint: string; re
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {recipes.map((recipe) => (
-          <MyRecipeCard key={recipe.id} recipe={recipe} />
+          <MyRecipeCard key={recipe.id} recipe={recipe} locale={locale} t={t} />
         ))}
       </div>
     </section>
@@ -103,14 +98,13 @@ function RecipeGroup({ title, hint, recipes }: { title: string; hint: string; re
 
 export default async function MyRecipesPage() {
   const auth = await requireAuth("/account/recipes");
+  const [locale, t] = await Promise.all([getLocale(), getServerTranslator()]);
 
   if (!auth.configured) {
     return (
-      <PageShell>
         <main className="page-main">
           <SupabaseSetupNotice title="ჩემი რეცეპტები დროებით მიუწვდომელია" />
         </main>
-      </PageShell>
     );
   }
 
@@ -120,34 +114,33 @@ export default async function MyRecipesPage() {
   const archived = recipes.filter((recipe) => recipe.status === "archived");
 
   return (
-    <PageShell>
       <main className="page-main">
         <Link
           href="/account"
           className="mb-5 inline-flex items-center gap-2 text-[13px] font-extrabold text-muted no-underline"
         >
           <ArrowLeft className="h-4 w-4" />
-          ანგარიშზე დაბრუნება
+          {t("ანგარიშზე დაბრუნება")}
         </Link>
 
         <Reveal as="section" className="hero-panel min-h-[200px] md:min-h-[260px]">
-          <p className="eyebrow">ჩემი რეცეპტები</p>
+          <p className="eyebrow">{t("ჩემი რეცეპტები")}</p>
           <h1 className="text-[clamp(34px,5vw,74px)] font-black leading-none tracking-normal">
-            <HeroTitle text="ჩემი რეცეპტები" />
+            <HeroTitle text={t("ჩემი რეცეპტები")} />
           </h1>
           <p className="mt-3 max-w-2xl text-sm font-medium leading-relaxed text-muted md:mt-4 md:text-base">
-            მართე შენი მონახაზები და გამოქვეყნებული რეცეპტები ერთ ადგილზე.
+            {t("მართე შენი მონახაზები და გამოქვეყნებული რეცეპტები ერთ ადგილზე.")}
           </p>
           <div className="mt-5 flex flex-wrap gap-3 text-[11px] font-black text-muted">
             <span className="rounded-full bg-surface px-3 py-1.5 tabular-nums">
-              გამოქვეყნებული · {published.length}
+              {t("გამოქვეყნებული · {count}", { count: published.length })}
             </span>
             <span className="rounded-full bg-soft-clay px-3 py-1.5 text-clay-dark tabular-nums">
-              მონახაზი · {drafts.length}
+              {t("მონახაზი · {count}", { count: drafts.length })}
             </span>
             {archived.length > 0 ? (
               <span className="rounded-full bg-oat px-3 py-1.5 tabular-nums">
-                არქივი · {archived.length}
+                {t("არქივი · {count}", { count: archived.length })}
               </span>
             ) : null}
           </div>
@@ -169,16 +162,22 @@ export default async function MyRecipesPage() {
               title="მონახაზები"
               hint="ჯერ არ გამოქვეყნებული, მხოლოდ შენი თვალისთვის."
               recipes={drafts}
+              locale={locale}
+              t={t}
             />
             <RecipeGroup
               title="გამოქვეყნებული"
               hint="ხელმისაწვდომი ყველასთვის — საჯაროდ გამოჩნდება."
               recipes={published}
+              locale={locale}
+              t={t}
             />
             <RecipeGroup
               title="არქივი"
               hint="დროებით ფარული რეცეპტები."
               recipes={archived}
+              locale={locale}
+              t={t}
             />
 
             <div className="mt-10 grid place-items-center">
@@ -190,6 +189,5 @@ export default async function MyRecipesPage() {
           </>
         )}
       </main>
-    </PageShell>
   );
 }

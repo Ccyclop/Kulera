@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bookmark, Sparkles } from "lucide-react";
+import { useI18n } from "@/components/i18n-provider";
 import { toggleSavedRecipe } from "@/lib/actions/social";
 import { cn } from "@/lib/cn";
 
@@ -39,6 +40,7 @@ export function BookmarkToggle({
   const [isPending, startTransition] = useTransition();
   const [burstKey, setBurstKey] = useState(0);
   const statusId = useId();
+  const { t } = useI18n();
 
   function handleClick() {
     if (!isAuthenticated) {
@@ -79,7 +81,7 @@ export function BookmarkToggle({
         disabled={isPending}
         aria-pressed={saved}
         aria-describedby={statusId}
-        aria-label={saved ? "შენახულიდან ამოღება" : "რეცეპტის შენახვა"}
+        aria-label={saved ? t("შენახულიდან ამოღება") : t("რეცეპტის შენახვა")}
         whileHover={{ y: -2 }}
         whileTap={{ scale: 0.85 }}
         transition={{ type: "spring", stiffness: 420, damping: 20 }}
@@ -149,7 +151,7 @@ export function BookmarkToggle({
       </motion.button>
 
       <span id={statusId} className="sr-only" role={error ? "alert" : "status"} aria-live="polite">
-        {error ?? (saved ? "რეცეპტი შენახულია." : "რეცეპტი შენახული არ არის.")}
+        {error ? t(error) : saved ? t("რეცეპტი შენახულია.") : t("რეცეპტი შენახული არ არის.")}
       </span>
     </div>
   );

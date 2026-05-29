@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Check, Share2 } from "lucide-react";
 import { useState } from "react";
+import { useI18n } from "@/components/i18n-provider";
 import { cn } from "@/lib/cn";
 import { ButtonShine, buttonBase, buttonVariants, motionButtonProps } from "./ui-buttons";
 
@@ -18,6 +19,7 @@ export function ShareButton({
   slug: string;
 }) {
   const [status, setStatus] = useState<Status>("idle");
+  const { t } = useI18n();
 
   async function handleShare() {
     const url =
@@ -52,7 +54,7 @@ export function ShareButton({
   }
 
   const label =
-    status === "shared" ? "გაზიარდა" : status === "copied" ? "ბმული დაკოპირდა" : "გაზიარება";
+    status === "shared" ? t("გაზიარდა") : status === "copied" ? t("ბმული დაკოპირდა") : t("გაზიარება");
   const Icon = status === "idle" ? Share2 : Check;
 
   return (

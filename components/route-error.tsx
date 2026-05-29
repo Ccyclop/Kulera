@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { Home, RotateCcw } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { useI18n } from "@/components/i18n-provider";
 import { cn } from "@/lib/cn";
 
 const buttonBase =
@@ -20,6 +21,8 @@ export function RouteError({
   title?: string;
   description?: string;
 }) {
+  const { t } = useI18n();
+
   useEffect(() => {
     if (typeof console !== "undefined") {
       console.error(error);
@@ -33,15 +36,15 @@ export function RouteError({
         aria-live="assertive"
         className="soft-card grid w-full max-w-xl gap-5 rounded-[30px] px-6 py-10 text-center"
       >
-        <Link href="/" className="mx-auto block w-fit no-underline" aria-label="Kulera home">
+        <Link href="/" className="mx-auto block w-fit no-underline" aria-label={t("Kulera home")}>
           <BrandLogo className="h-10 w-[126px]" />
         </Link>
         <div className="mx-auto grid h-[76px] w-[76px] place-items-center rounded-3xl bg-danger/10 text-2xl font-black text-danger">
           !
         </div>
         <div>
-          <h1 className="text-2xl font-black leading-tight">{title}</h1>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">{description}</p>
+          <h1 className="text-2xl font-black leading-tight">{t(title)}</h1>
+          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">{t(description)}</p>
           {error.digest ? (
             <p className="mt-3 text-[11px] font-extrabold text-muted">ID: {error.digest}</p>
           ) : null}
@@ -53,14 +56,14 @@ export function RouteError({
             className={cn(buttonBase, "border border-clay bg-clay text-white hover:border-clay-dark hover:bg-clay-dark")}
           >
             <RotateCcw className="h-4 w-4" />
-            თავიდან ცდა
+            {t("თავიდან ცდა")}
           </button>
           <Link
             href="/"
             className={cn(buttonBase, "border border-oat bg-surface text-ink hover:border-sand hover:bg-[#FAF6F0]")}
           >
             <Home className="h-4 w-4" />
-            მთავარზე დაბრუნება
+            {t("მთავარზე დაბრუნება")}
           </Link>
         </div>
       </section>

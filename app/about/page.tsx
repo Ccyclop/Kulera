@@ -1,6 +1,6 @@
 import { ButtonLink } from "@/components/ui";
 import { HeroTitle, Reveal, Stagger } from "@/components/motion";
-import { PageShell } from "@/components/page-shell";
+import { getServerTranslator } from "@/lib/i18n/server";
 
 const sections = [
   {
@@ -21,17 +21,18 @@ const sections = [
   },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const t = await getServerTranslator();
+
   return (
-    <PageShell>
       <main className="page-main">
         <Reveal as="section" className="hero-panel min-h-[320px]">
           <p className="eyebrow">Kulera</p>
           <h1 className="text-[clamp(42px,5vw,74px)] font-black leading-none tracking-normal">
-            <HeroTitle text="Kulera — კულინარიის კერა" />
+            <HeroTitle text={t("Kulera — კულინარიის კერა")} />
           </h1>
           <p className="mt-4 max-w-2xl text-base font-medium leading-relaxed text-muted">
-            ქართული რეცეპტების პლატფორმა ყოველდღიური სამზარეულოსთვის.
+            {t("ქართული რეცეპტების პლატფორმა ყოველდღიური სამზარეულოსთვის.")}
           </p>
           <div className="mt-7 flex flex-col gap-2 sm:flex-row">
             <ButtonLink href="/">რეცეპტების ნახვა</ButtonLink>
@@ -45,12 +46,11 @@ export default function AboutPage() {
         <Stagger as="section" className="mt-8 grid gap-4 md:grid-cols-2" stagger={0.1} childVariant="fadeUp">
           {sections.map((section) => (
             <article key={section.title} className="soft-card rounded-[28px] p-6">
-              <h2 className="text-[24px] font-black leading-tight">{section.title}</h2>
-              <p className="mt-3 text-sm leading-relaxed text-muted">{section.body}</p>
+              <h2 className="text-[24px] font-black leading-tight">{t(section.title)}</h2>
+              <p className="mt-3 text-sm leading-relaxed text-muted">{t(section.body)}</p>
             </article>
           ))}
         </Stagger>
       </main>
-    </PageShell>
   );
 }

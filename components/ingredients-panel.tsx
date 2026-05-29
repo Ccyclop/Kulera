@@ -2,6 +2,7 @@
 
 import { Minus, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useI18n } from "@/components/i18n-provider";
 import { cn } from "@/lib/cn";
 import { formatAmount, formatQuantity } from "@/lib/ingredients";
 import type { Ingredient } from "@/lib/types";
@@ -40,6 +41,7 @@ export function IngredientsPanel({
 }) {
   const [servings, setServings] = useState(() => Math.max(MIN_SERVINGS, Math.round(initialServings)));
   const [checked, setChecked] = useState<Set<number>>(() => new Set());
+  const { t } = useI18n();
 
   const scale = baseServings && baseServings > 0 ? servings / baseServings : 1;
 
@@ -70,8 +72,8 @@ export function IngredientsPanel({
 
   return (
     <aside className="soft-card h-fit rounded-[28px] p-5 xl:sticky xl:top-28">
-      <h2 className="text-[23px] font-black leading-tight">ინგრედიენტები</h2>
-      <p className="mt-2 text-sm leading-relaxed text-muted">მონიშნე რაც უკვე გაქვს.</p>
+      <h2 className="text-[23px] font-black leading-tight">{t("ინგრედიენტები")}</h2>
+      <p className="mt-2 text-sm leading-relaxed text-muted">{t("მონიშნე რაც უკვე გაქვს.")}</p>
 
       {showScaler ? (
         <div className="mt-5 inline-flex min-h-[42px] items-center gap-3 rounded-full border border-oat bg-[#FAF6F0] px-3 text-[13px] font-black">
@@ -80,26 +82,26 @@ export function IngredientsPanel({
             onClick={() => adjust(-1)}
             disabled={servings <= MIN_SERVINGS}
             className="grid h-7 w-7 place-items-center rounded-full bg-surface text-clay transition disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label="პორციის შემცირება"
+            aria-label={t("პორციის შემცირება")}
           >
             <Minus className="h-3.5 w-3.5" />
           </button>
           <span className="min-w-[88px] text-center tabular-nums">
-            {servings} პორცია
+            {t("{count} პორცია", { count: servings })}
           </span>
           <button
             type="button"
             onClick={() => adjust(1)}
             disabled={servings >= MAX_SERVINGS}
             className="grid h-7 w-7 place-items-center rounded-full bg-surface text-clay transition disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label="პორციის გაზრდა"
+            aria-label={t("პორციის გაზრდა")}
           >
             <Plus className="h-3.5 w-3.5" />
           </button>
         </div>
       ) : (
         <div className="mt-5 inline-flex min-h-[42px] items-center gap-3 rounded-full border border-oat bg-[#FAF6F0] px-4 text-[13px] font-black">
-          <span>{servingsLabel} პორცია</span>
+          <span>{t("{count} პორცია", { count: servingsLabel })}</span>
         </div>
       )}
 
@@ -121,7 +123,7 @@ export function IngredientsPanel({
                   isChecked && "border-sage bg-sage",
                 )}
                 aria-pressed={isChecked}
-                aria-label={`${ingredient.name} მონიშვნა`}
+                aria-label={t("{name} მონიშვნა", { name: ingredient.name })}
               >
                 {isChecked ? "✓" : ""}
               </button>

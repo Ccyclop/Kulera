@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState, useTransition } from "react";
+import { useI18n } from "@/components/i18n-provider";
 import { Button } from "./ui";
 
 export function SearchInput({
@@ -21,6 +22,7 @@ export function SearchInput({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useI18n();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -78,8 +80,8 @@ export function SearchInput({
         <input
           name="q"
           type="search"
-          aria-label="რეცეპტის ძიება"
-          placeholder={placeholder}
+          aria-label={t("რეცეპტის ძიება")}
+          placeholder={t(placeholder)}
           value={value}
           onChange={(event) => setValue(event.target.value)}
           onFocus={() => setFocused(true)}
@@ -92,7 +94,7 @@ export function SearchInput({
         />
       </label>
       <Button type="submit" className="w-full min-h-[52px] md:w-auto md:min-w-[132px]" disabled={isPending}>
-        ვიპოვოთ
+        {t("ვიპოვოთ")}
       </Button>
     </motion.form>
   );

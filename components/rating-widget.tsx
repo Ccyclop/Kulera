@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useId, useRef, useState, useTransition } from "react";
 import { Star } from "lucide-react";
+import { useI18n } from "@/components/i18n-provider";
 import { rateRecipe } from "@/lib/actions/social";
 import { cn } from "@/lib/cn";
 
@@ -33,6 +34,7 @@ export function RatingWidget({
   const [isPending, startTransition] = useTransition();
   const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const helpId = useId();
+  const { t } = useI18n();
 
   const displayValue = hovered ?? userRating ?? 0;
   const helpText =
@@ -99,7 +101,7 @@ export function RatingWidget({
     <div className="grid gap-2">
       <div
         role="radiogroup"
-        aria-label="რეცეპტის შეფასება"
+        aria-label={t("რეცეპტის შეფასება")}
         aria-describedby={helpId}
         className="inline-flex items-center gap-1"
         onMouseLeave={() => setHovered(null)}
@@ -116,7 +118,7 @@ export function RatingWidget({
               type="button"
               role="radio"
               aria-checked={userRating === value}
-              aria-label={`${value} ვარსკვლავი`}
+              aria-label={t("{value} ვარსკვლავი", { value })}
               aria-describedby={helpId}
               disabled={isPending}
               onClick={() => handleSelect(value)}
@@ -135,7 +137,7 @@ export function RatingWidget({
         })}
       </div>
       <p id={helpId} className="text-xs font-extrabold text-muted" aria-live="polite">
-        {error ?? helpText}
+        {error ? t(error) : userRating !== null ? t("შენი შეფასება: {value} ვარსკვლავი", { value: userRating }) : t(helpText)}
       </p>
     </div>
   );

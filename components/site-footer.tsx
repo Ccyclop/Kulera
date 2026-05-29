@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { BrandLogo } from "@/components/brand-logo";
+import { useI18n } from "@/components/i18n-provider";
 
 const links = [
   { href: "/search", label: "ძიება" },
@@ -13,11 +14,13 @@ const links = [
 ];
 
 export function SiteFooter() {
+  const { t } = useI18n();
+
   return (
     <footer className="kulera-container border-t border-oat/80 py-10 text-sm text-muted">
       <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
         <div>
-          <Link href="/" className="block w-fit no-underline" aria-label="Kulera home">
+          <Link href="/" className="block w-fit no-underline" aria-label={t("Kulera home")}>
             <motion.span
               className="inline-block"
               whileHover={{ scale: 1.05, rotate: -1.5 }}
@@ -27,7 +30,7 @@ export function SiteFooter() {
               <BrandLogo className="h-10 w-[126px]" />
             </motion.span>
           </Link>
-          <span className="mt-1 block">კულინარიის კერა ყოველდღიური არჩევანისთვის.</span>
+          <span className="mt-1 block">{t("კულინარიის კერა ყოველდღიური არჩევანისთვის.")}</span>
         </div>
         <nav className="flex flex-wrap gap-3">
           {links.map((link) => (
@@ -36,7 +39,7 @@ export function SiteFooter() {
               href={link.href}
               className="group/foot relative inline-flex font-bold no-underline transition-colors duration-200 hover:text-clay"
             >
-              <span>{link.label}</span>
+              <span>{t(link.label)}</span>
               <span
                 aria-hidden
                 className="pointer-events-none absolute -bottom-0.5 left-0 h-[2px] w-0 rounded-full bg-clay transition-all duration-300 ease-out group-hover/foot:w-full"

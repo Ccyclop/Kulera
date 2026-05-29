@@ -7,8 +7,10 @@ import { useFieldArray, useForm, type Resolver } from "react-hook-form";
 import { Eye, Plus, Trash2, X } from "lucide-react";
 import { FocusDialog } from "@/components/focus-dialog";
 import { ImageUploader } from "@/components/image-uploader";
+import { useI18n } from "@/components/i18n-provider";
 import { VideoUploader } from "@/components/video-uploader";
 import type { Category, Ingredient, Recipe, RecipeStep } from "@/lib/types";
+import { localizeCategory } from "@/lib/i18n/shared";
 import {
   recipeDraftFormSchema,
   recipePublishFormSchema,
@@ -104,6 +106,8 @@ export function RecipeForm({
   const isEdit = mode === "edit";
   const isPublished = recipe?.status === "published";
   const saveIntent: RecipeSubmitIntent = isEdit && isPublished ? "update" : "save-draft";
+  const { locale, t } = useI18n();
+  const localizedCategories = categories.map((category) => localizeCategory(locale, category));
 
   const resolver = useMemo<Resolver<RecipeFormValues>>(
     () =>
@@ -284,7 +288,7 @@ export function RecipeForm({
           role="alert"
           aria-live="assertive"
         >
-          {state.formError}
+          {t(state.formError)}
         </div>
       ) : null}
 
@@ -304,9 +308,9 @@ export function RecipeForm({
         <div className="grid gap-4 md:grid-cols-3">
           <Select label="კატეგორია" error={mergedError(errors.categoryId, state.fieldErrors?.categoryId)} {...register("categoryId")}>
             <option value="">
-              {categories.length > 0 ? "აირჩიე კატეგორია" : "კატეგორიები ვერ ჩაიტვირთა"}
+              {categories.length > 0 ? t("აირჩიე კატეგორია") : t("კატეგორიები ვერ ჩაიტვირთა")}
             </option>
-            {categories.map((category) => (
+            {localizedCategories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
               </option>
@@ -321,9 +325,9 @@ export function RecipeForm({
             {...register("cookingTime")}
           />
           <Select label="სირთულე" error={mergedError(errors.difficulty, state.fieldErrors?.difficulty)} {...register("difficulty")}>
-            <option value="მარტივი">მარტივი</option>
-            <option value="საშუალო">საშუალო</option>
-            <option value="რთული">რთული</option>
+            <option value="მარტივი">{t("მარტივი")}</option>
+            <option value="საშუალო">{t("საშუალო")}</option>
+            <option value="რთული">{t("რთული")}</option>
           </Select>
         </div>
         <FormInput
@@ -335,7 +339,7 @@ export function RecipeForm({
 
         <section className="grid gap-2" aria-describedby={ingredientsError ? "ingredients-error" : undefined}>
           <div className="flex items-center justify-between gap-3">
-            <span className="field-label">ინგრედიენტები</span>
+            <span className="field-label">{t("ინგრედიენტები")}</span>
             <Button
               type="button"
               variant="secondary"
@@ -361,14 +365,14 @@ export function RecipeForm({
                       data-ingredient-index={index}
                       data-ingredient-part="name"
                       className="field-control bg-surface"
-                      placeholder="ინგრედიენტი"
-                      aria-label={`ინგრედიენტი ${index + 1}`}
+                      placeholder={t("ინგრედიენტი")}
+                      aria-label={t("ინგრედიენტი {count}", { count: index + 1 })}
                       aria-invalid={Boolean(nameError)}
                       aria-describedby={nameErrorId}
                     />
                     {nameError ? (
                       <span id={nameErrorId} className="text-xs font-extrabold text-danger" aria-live="polite">
-                        {nameError}
+                        {t(nameError)}
                       </span>
                     ) : null}
                   </div>
@@ -377,14 +381,14 @@ export function RecipeForm({
                       {...register(`ingredients.${index}.amount`)}
                       onKeyDown={(event) => handleAmountKeyDown(index, event)}
                       className="field-control bg-surface"
-                      placeholder="რაოდენობა"
-                      aria-label={`რაოდენობა ინგრედიენტისთვის ${index + 1}`}
+                      placeholder={t("რაოდენობა")}
+                      aria-label={t("რაოდენობა ინგრედიენტისთვის {count}", { count: index + 1 })}
                       aria-invalid={Boolean(amountError)}
                       aria-describedby={amountErrorId}
                     />
                     {amountError ? (
                       <span id={amountErrorId} className="text-xs font-extrabold text-danger" aria-live="polite">
-                        {amountError}
+                        {t(amountError)}
                       </span>
                     ) : null}
                   </div>
@@ -392,7 +396,7 @@ export function RecipeForm({
                     type="button"
                     onClick={() => removeIngredientRow(index)}
                     className="grid h-[42px] w-[42px] place-items-center rounded-[14px] border border-oat bg-surface text-muted transition hover:border-danger/30 hover:bg-danger/10 hover:text-danger focus:outline-none focus-visible:ring-4 focus-visible:ring-danger/20"
-                    aria-label={`ინგრედიენტის ${index + 1} წაშლა`}
+                    aria-label={t("ინგრედიენტის {count} წაშლა", { count: index + 1 })}
                   >
                     <X className="h-4 w-4" aria-hidden />
                   </button>
@@ -402,14 +406,14 @@ export function RecipeForm({
           </div>
           {ingredientsError ? (
             <span id="ingredients-error" className="text-xs font-extrabold text-danger" aria-live="polite">
-              {ingredientsError}
+              {t(ingredientsError)}
             </span>
           ) : null}
         </section>
 
         <section className="grid gap-2" aria-describedby={stepsError ? "steps-error" : undefined}>
           <div className="flex items-center justify-between gap-3">
-            <span className="field-label">მომზადების ნაბიჯები</span>
+            <span className="field-label">{t("მომზადების ნაბიჯები")}</span>
             <Button
               type="button"
               variant="secondary"
@@ -436,37 +440,37 @@ export function RecipeForm({
                       {...register(`steps.${index}.body`)}
                       rows={1}
                       className="field-control resize-y bg-surface py-3 leading-snug"
-                      placeholder={`ნაბიჯი ${index + 1}`}
-                      aria-label={`ნაბიჯი ${index + 1}`}
+                      placeholder={t("ნაბიჯი {count}", { count: index + 1 })}
+                      aria-label={t("ნაბიჯი {count}", { count: index + 1 })}
                       aria-invalid={Boolean(bodyError)}
                       aria-describedby={bodyErrorId}
                     />
                     {bodyError ? (
                       <span id={bodyErrorId} className="text-xs font-extrabold text-danger" aria-live="polite">
-                        {bodyError}
+                        {t(bodyError)}
                       </span>
                     ) : null}
                     <div className="flex flex-wrap items-center gap-2">
                       <label className="inline-flex items-center gap-2 rounded-[12px] border border-oat bg-surface px-3 py-1.5 text-xs font-black text-muted">
-                        <span>ტაიმერი</span>
+                        <span>{t("ტაიმერი")}</span>
                         <input
                           {...register(`steps.${index}.duration`)}
                           type="number"
                           min="0"
                           step="0.5"
                           inputMode="decimal"
-                          placeholder="წთ"
+                          placeholder={t("წთ")}
                           className="w-16 bg-transparent text-center text-sm font-black text-ink outline-none"
-                          aria-label={`ნაბიჯის ${index + 1} ხანგრძლივობა წუთებში`}
+                          aria-label={t("ნაბიჯის {count} ხანგრძლივობა წუთებში", { count: index + 1 })}
                         />
                       </label>
                       <span className="text-[11px] leading-snug text-muted">
-                        არჩევითი — დატოვე ცარიელი, თუ ტაიმერი არ გჭირდება.
+                        {t("არჩევითი — დატოვე ცარიელი, თუ ტაიმერი არ გჭირდება.")}
                       </span>
                     </div>
                     {durationError ? (
                       <span className="text-xs font-extrabold text-danger" aria-live="polite">
-                        {durationError}
+                        {t(durationError)}
                       </span>
                     ) : null}
                   </div>
@@ -474,7 +478,7 @@ export function RecipeForm({
                     type="button"
                     onClick={() => removeStepRow(index)}
                     className="grid h-12 w-[42px] place-items-center rounded-[14px] border border-oat bg-surface text-muted transition hover:border-danger/30 hover:bg-danger/10 hover:text-danger focus:outline-none focus-visible:ring-4 focus-visible:ring-danger/20"
-                    aria-label={`ნაბიჯის ${index + 1} წაშლა`}
+                    aria-label={t("ნაბიჯის {count} წაშლა", { count: index + 1 })}
                   >
                     <X className="h-4 w-4" aria-hidden />
                   </button>
@@ -484,7 +488,7 @@ export function RecipeForm({
           </div>
           {stepsError ? (
             <span id="steps-error" className="text-xs font-extrabold text-danger" aria-live="polite">
-              {stepsError}
+              {t(stepsError)}
             </span>
           ) : null}
         </section>
@@ -499,7 +503,7 @@ export function RecipeForm({
           />
           {state.fieldErrors?.imageUrl ? (
             <span className="mt-2 block text-xs font-extrabold text-danger" aria-live="polite">
-              {state.fieldErrors.imageUrl}
+              {t(state.fieldErrors.imageUrl)}
             </span>
           ) : null}
         </div>
@@ -512,7 +516,7 @@ export function RecipeForm({
           />
           {state.fieldErrors?.videoUrl ? (
             <span className="mt-2 block text-xs font-extrabold text-danger" aria-live="polite">
-              {state.fieldErrors.videoUrl}
+              {t(state.fieldErrors.videoUrl)}
             </span>
           ) : null}
         </div>
@@ -550,10 +554,10 @@ export function RecipeForm({
       {deleteOpen ? (
         <FocusDialog labelledBy="delete-recipe-title" onClose={() => setDeleteOpen(false)}>
           <h2 id="delete-recipe-title" className="text-xl font-black leading-tight">
-            წავშალოთ რეცეპტი?
+            {t("წავშალოთ რეცეპტი?")}
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-muted">
-            ეს მოქმედება შეუქცევადია. რეცეპტი, შეფასებები, კომენტარები და შენახვები წაიშლება.
+            {t("ეს მოქმედება შეუქცევადია. რეცეპტი, შეფასებები, კომენტარები და შენახვები წაიშლება.")}
           </p>
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
             <Button type="button" variant="danger" disabled={isPending} onClick={deleteRecipe}>

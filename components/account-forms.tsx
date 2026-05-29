@@ -11,6 +11,7 @@ import { Bell, Save, Trash2 } from "lucide-react";
 import { FocusDialog } from "@/components/focus-dialog";
 import { FormToast } from "@/components/form-toast";
 import { ImageUploader } from "@/components/image-uploader";
+import { useI18n } from "@/components/i18n-provider";
 import { deleteAccount, updateNotificationPrefs, updatePassword, updateProfile, type AccountActionState } from "@/lib/actions/account";
 import type { AccountProfile } from "@/lib/data";
 import { AVATAR_BUCKET } from "@/lib/storage";
@@ -43,6 +44,8 @@ function mergedError(clientError: unknown, serverError?: string) {
 }
 
 function ActionMessage({ state }: { state: AccountActionState }) {
+  const { t } = useI18n();
+
   if (!state.formError) return null;
 
   return (
@@ -51,7 +54,7 @@ function ActionMessage({ state }: { state: AccountActionState }) {
       role="alert"
       aria-live="assertive"
     >
-      {state.formError}
+      {t(state.formError)}
     </p>
   );
 }
@@ -74,6 +77,7 @@ function SubmitButton({
 
 export function ProfileSettingsForm({ profile, userId }: { profile: AccountProfile | null; userId: string }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [state, formAction, actionPending] = useActionState(updateProfile, initialState);
   const [transitionPending, startTransition] = useTransition();
   const isPending = actionPending || transitionPending;
@@ -118,8 +122,8 @@ export function ProfileSettingsForm({ profile, userId }: { profile: AccountProfi
     <form onSubmit={handleSubmit(submitForm)} className="soft-card rounded-[28px] p-5 md:p-7" noValidate>
       <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="text-[28px] font-black leading-tight">პროფილი</h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted">ეს ინფორმაცია ჩანს შენს კულინარის გვერდზე.</p>
+          <h2 className="text-[28px] font-black leading-tight">{t("პროფილი")}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted">{t("ეს ინფორმაცია ჩანს შენს კულინარის გვერდზე.")}</p>
         </div>
         <div className="relative grid h-16 w-16 place-items-center overflow-hidden rounded-2xl bg-sage-light text-xl font-black text-sage">
           {profile?.avatarUrl ? (
@@ -180,15 +184,15 @@ export function ProfileSettingsForm({ profile, userId }: { profile: AccountProfi
         <div className="grid gap-3 md:grid-cols-3">
           <div className="rounded-[17px] border border-oat bg-[#FAF6F0] p-4">
             <strong className="block text-lg font-black leading-none">{profile?.totalRecipes ?? 0}</strong>
-            <span className="mt-2 block text-[11px] font-extrabold text-muted">ყველა რეცეპტი</span>
+              <span className="mt-2 block text-[11px] font-extrabold text-muted">{t("ყველა რეცეპტი")}</span>
           </div>
           <div className="rounded-[17px] border border-oat bg-[#FAF6F0] p-4">
             <strong className="block text-lg font-black leading-none">{profile?.publishedRecipes ?? 0}</strong>
-            <span className="mt-2 block text-[11px] font-extrabold text-muted">გამოქვეყნებული</span>
+              <span className="mt-2 block text-[11px] font-extrabold text-muted">{t("გამოქვეყნებული")}</span>
           </div>
           <div className="rounded-[17px] border border-oat bg-[#FAF6F0] p-4">
             <strong className="block text-lg font-black leading-none">{profile?.savedRecipes ?? 0}</strong>
-            <span className="mt-2 block text-[11px] font-extrabold text-muted">შენახული</span>
+              <span className="mt-2 block text-[11px] font-extrabold text-muted">{t("შენახული")}</span>
           </div>
         </div>
       </div>
@@ -206,6 +210,7 @@ export function ProfileSettingsForm({ profile, userId }: { profile: AccountProfi
 
 export function PasswordSettingsForm() {
   const [state, formAction, actionPending] = useActionState(updatePassword, initialState);
+  const { t } = useI18n();
   const [transitionPending, startTransition] = useTransition();
   const isPending = actionPending || transitionPending;
   const {
@@ -274,7 +279,7 @@ export function PasswordSettingsForm() {
             href="/login?redirectTo=/account"
             className="inline-flex min-h-[42px] items-center justify-center rounded-[15px] border border-oat bg-surface px-4 text-[13px] font-black no-underline transition hover:border-sand hover:bg-[#FAF6F0] focus:outline-none focus-visible:ring-4 focus-visible:ring-soft-clay/60"
           >
-            ხელახლა შესვლა
+            {t("ხელახლა შესვლა")}
           </Link>
         ) : null}
       </div>
@@ -285,6 +290,7 @@ export function PasswordSettingsForm() {
 
 export function NotificationSettingsForm({ profile }: { profile: AccountProfile | null }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [state, formAction, actionPending] = useActionState(updateNotificationPrefs, initialState);
   const [transitionPending, startTransition] = useTransition();
   const isPending = actionPending || transitionPending;
@@ -319,15 +325,15 @@ export function NotificationSettingsForm({ profile }: { profile: AccountProfile 
         <label className="flex min-h-[74px] items-center gap-3 rounded-[18px] border border-oat bg-[#FAF6F0] p-4 focus-within:ring-4 focus-within:ring-soft-clay/50">
           <input type="checkbox" className="h-5 w-5 accent-clay" {...register("comments")} />
           <span>
-            <span className="block text-sm font-black">კომენტარები</span>
-            <span className="mt-1 block text-xs font-bold text-muted">ახალი კომენტარები შენს რეცეპტებზე.</span>
+            <span className="block text-sm font-black">{t("კომენტარები")}</span>
+            <span className="mt-1 block text-xs font-bold text-muted">{t("ახალი კომენტარები შენს რეცეპტებზე.")}</span>
           </span>
         </label>
         <label className="flex min-h-[74px] items-center gap-3 rounded-[18px] border border-oat bg-[#FAF6F0] p-4 focus-within:ring-4 focus-within:ring-soft-clay/50">
           <input type="checkbox" className="h-5 w-5 accent-clay" {...register("ratings")} />
           <span>
-            <span className="block text-sm font-black">შეფასებები</span>
-            <span className="mt-1 block text-xs font-bold text-muted">ახალი შეფასებები შენს რეცეპტებზე.</span>
+            <span className="block text-sm font-black">{t("შეფასებები")}</span>
+            <span className="mt-1 block text-xs font-bold text-muted">{t("ახალი შეფასებები შენს რეცეპტებზე.")}</span>
           </span>
         </label>
       </div>
@@ -344,6 +350,7 @@ export function NotificationSettingsForm({ profile }: { profile: AccountProfile 
 
 export function DeleteAccountForm({ username }: { username: string }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const { t } = useI18n();
   const [state, formAction, actionPending] = useActionState(deleteAccount, initialState);
   const [transitionPending, startTransition] = useTransition();
   const isPending = actionPending || transitionPending;
@@ -383,8 +390,8 @@ export function DeleteAccountForm({ username }: { username: string }) {
     <>
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-[28px] font-black leading-tight">სახიფათო ზონა</h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted">ანგარიშის წაშლა შეუქცევადია.</p>
+          <h2 className="text-[28px] font-black leading-tight">{t("სახიფათო ზონა")}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted">{t("ანგარიშის წაშლა შეუქცევადია.")}</p>
         </div>
         <Button type="button" variant="danger" onClick={() => setDeleteOpen(true)} disabled={isPending}>
           <Trash2 className="h-4 w-4" aria-hidden />
@@ -401,10 +408,10 @@ export function DeleteAccountForm({ username }: { username: string }) {
         <FocusDialog labelledBy="delete-account-title" onClose={() => !isPending && setDeleteOpen(false)}>
           <form onSubmit={handleSubmit(submitForm)} noValidate>
             <h2 id="delete-account-title" className="text-xl font-black leading-tight">
-              წავშალოთ ანგარიში?
+              {t("წავშალოთ ანგარიში?")}
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted">
-              წაიშლება პროფილი, რეცეპტები, კომენტარები, შეფასებები და შენახვები. დასადასტურებლად ჩაწერე username.
+              {t("წაიშლება პროფილი, რეცეპტები, კომენტარები, შეფასებები და შენახვები. დასადასტურებლად ჩაწერე username.")}
             </p>
             <div className="mt-4 grid gap-3">
               <ActionMessage state={state} />

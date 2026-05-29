@@ -4,11 +4,12 @@ import { Clock } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { CategoryCard } from "@/components/category-card";
 import { AnimatedCounter, Floating, HeroTitle, MagneticChip, Reveal, Stagger } from "@/components/motion";
-import { PageShell } from "@/components/page-shell";
 import { CompactRecipeRow, LatestRecipeCard } from "@/components/recipe-card";
 import { SearchInput } from "@/components/search-input";
 import { Badge, ButtonLink, EmptyState, Pagination, SidebarCard } from "@/components/ui";
-import { getCategories, getRecipes, getTopRecipes } from "@/lib/data";
+import { getCategories, getDailyPicks, getRecipes, getTopRecipes } from "@/lib/data";
+import { getLocale, getServerTranslator } from "@/lib/i18n/server";
+import { formatMinutes, formatRatingCount, translateDifficulty } from "@/lib/i18n/shared";
 import { paginate } from "@/lib/pagination";
 import { firstSearchParam, type SearchParamRecord } from "@/lib/search-params";
 
@@ -23,15 +24,18 @@ export default async function HomePage({
   searchParams: Promise<SearchParamRecord>;
 }) {
   const params = await searchParams;
+  const [locale, t] = await Promise.all([getLocale(), getServerTranslator()]);
   const latestCursor = firstSearchParam(params, LATEST_CURSOR_KEY) || undefined;
-  const [categories, recipes, topRecipes] = await Promise.all([
+  const [categories, recipes, topRecipes, dailyPicks] = await Promise.all([
     getCategories(),
     getRecipes({ sort: "newest" }),
     getTopRecipes(5),
+    getDailyPicks({ poolSize: 20, count: 5 }),
   ]);
   const latestPage = paginate(recipes, latestCursor, LATEST_PAGE_SIZE);
   const latestRecipes = latestPage.items;
-  const dailyRecipe = recipes[0];
+  const dailyRecipe = dailyPicks[0] ?? recipes[0];
+  const dailyIdeas = dailyPicks.slice(1, 5);
   const featuredRecipe = topRecipes[0] ?? dailyRecipe;
   const quickRecipesCount = recipes.filter((recipe) => recipe.cookingTime <= 30).length;
   const averageRating = recipes.length > 0
@@ -39,7 +43,6 @@ export default async function HomePage({
     : 0;
 
   return (
-    <PageShell>
       <main className="page-main">
         <section className="grid min-h-[536px] grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1fr)_400px]">
           <div className="relative overflow-hidden rounded-[30px] bg-ink px-6 py-9 text-[#FFF9EF] shadow-panel md:px-14 md:py-[52px]">
@@ -53,14 +56,13 @@ export default async function HomePage({
             </Floating>
             <div className="relative z-10">
               <p className="mb-7 inline-flex items-center gap-2 text-[13px] font-black text-soft-clay before:h-2 before:w-2 before:rounded-full before:bg-clay">
-                დღეს თბილისში • ნამდვილი არჩევანი
+                {t("დღეს თბილისში • ნამდვილი არჩევანი")}
               </p>
               <h1 className="max-w-none text-balance text-[clamp(48px,5.6vw,92px)] font-black leading-[1.15] tracking-normal">
-                <HeroTitle text="იპოვე რა მოამზადო დღეს" stagger={0.035} />
+                <HeroTitle text={t("იპოვე რა მოამზადო დღეს")} stagger={0.035} />
               </h1>
               <p className="mt-7 max-w-2xl text-lg font-medium leading-relaxed text-sand">
-                დაწერე კერძი, ინგრედიენტი ან უბრალოდ ის, რაც სახლში გაქვს. Kulera გაჩვენებს რეცეპტებს,
-                რომლებიც რეალურად ჯდება დღეში.
+                {t("დაწერე კერძი, ინგრედიენტი ან უბრალოდ ის, რაც სახლში გაქვს. Kulera გაჩვენებს რეცეპტებს, რომლებიც რეალურად ჯდება დღეში.")}
               </p>
               <SearchInput dark />
               <div className="mt-4 flex flex-wrap gap-2">
@@ -69,7 +71,7 @@ export default async function HomePage({
                     key={chip}
                     className="min-h-[34px] cursor-pointer place-items-center rounded-full border border-white/20 bg-white/10 px-4 text-xs font-extrabold transition-colors duration-200 hover:border-white/50 hover:bg-white/20"
                   >
-                    {chip}
+                    {t(chip)}
                   </MagneticChip>
                 ))}
               </div>
@@ -78,19 +80,19 @@ export default async function HomePage({
                   <strong className="block text-2xl font-black leading-none">
                     <AnimatedCounter value={recipes.length} />
                   </strong>
-                  <span className="mt-2 block text-xs font-bold leading-snug text-sand">შერჩეული რეცეპტი სეზონით</span>
+                  <span className="mt-2 block text-xs font-bold leading-snug text-sand">{t("შერჩეული რეცეპტი სეზონით")}</span>
                 </div>
                 <div className="border-l border-white/25 pl-4">
                   <strong className="block text-2xl font-black leading-none">
                     <AnimatedCounter value={quickRecipesCount} />
                   </strong>
-                  <span className="mt-2 block text-xs font-bold leading-snug text-sand">კერძი 30 წუთზე ნაკლებში</span>
+                  <span className="mt-2 block text-xs font-bold leading-snug text-sand">{t("კერძი 30 წუთზე ნაკლებში")}</span>
                 </div>
                 <div className="border-l border-white/25 pl-4">
                   <strong className="block text-2xl font-black leading-none">
                     <AnimatedCounter value={averageRating} decimals={1} />
                   </strong>
-                  <span className="mt-2 block text-xs font-bold leading-snug text-sand">საშუალო შეფასება ოჯახურ კერძებზე</span>
+                  <span className="mt-2 block text-xs font-bold leading-snug text-sand">{t("საშუალო შეფასება ოჯახურ კერძებზე")}</span>
                 </div>
               </Stagger>
             </div>
@@ -99,43 +101,43 @@ export default async function HomePage({
           {dailyRecipe ? (
             <Link href={`/recipes/${dailyRecipe.slug}`} className="soft-card grid rounded-[34px] p-5 text-ink no-underline">
               <div className="mb-5 flex items-start justify-between gap-5">
-                <h2 className="text-[25px] font-black leading-tight">დღის კერძი</h2>
+                <h2 className="text-[25px] font-black leading-tight">{t("დღის კერძი")}</h2>
                 <span className="rounded-full bg-soft-clay px-3 py-1 text-xs font-black text-wine">★ {dailyRecipe.rating.toFixed(1)}</span>
               </div>
               <div className="relative min-h-[306px] overflow-hidden rounded-[26px] bg-placeholder">
                 <Image src={dailyRecipe.imageUrl} alt={dailyRecipe.title} fill sizes="424px" className="object-cover" />
                 <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-2 text-[11px] font-black text-clay">
-                  რედაქციის არჩევანი
+                  {t("რედაქციის არჩევანი")}
                 </div>
               </div>
               <div className="mt-5 grid grid-cols-[1fr_auto] items-end gap-4">
                 <strong className="text-[22px] font-black leading-tight">{dailyRecipe.title}</strong>
                 <span className="text-right text-xs font-extrabold leading-relaxed text-muted">
-                  {dailyRecipe.cookingTime} წთ
+                  {formatMinutes(locale, dailyRecipe.cookingTime)}
                   <br />
-                  {dailyRecipe.difficulty}
+                  {translateDifficulty(locale, dailyRecipe.difficulty)}
                 </span>
               </div>
               <div className="mt-5 grid grid-cols-3 gap-2">
                 <div className="rounded-[15px] border border-oat bg-[#FAF6F0] p-3">
-                  <b className="block text-sm">{dailyRecipe.ingredients.length} ინგრ.</b>
-                  <small className="mt-2 block text-[11px] font-extrabold text-muted">ძირითადი</small>
+                  <b className="block text-sm">{dailyRecipe.ingredients.length} {t("ინგრ.")}</b>
+                  <small className="mt-2 block text-[11px] font-extrabold text-muted">{t("ძირითადი")}</small>
                 </div>
                 <div className="rounded-[15px] border border-oat bg-[#FAF6F0] p-3">
-                  <b className="block text-sm">{dailyRecipe.steps.length} ნაბიჯი</b>
-                  <small className="mt-2 block text-[11px] font-extrabold text-muted">მოკლე პროცესი</small>
+                  <b className="block text-sm">{dailyRecipe.steps.length} {t("ნაბიჯი")}</b>
+                  <small className="mt-2 block text-[11px] font-extrabold text-muted">{t("მოკლე პროცესი")}</small>
                 </div>
                 <div className="rounded-[15px] border border-oat bg-[#FAF6F0] p-3">
                   <b className="block text-sm">{dailyRecipe.servings}</b>
-                  <small className="mt-2 block text-[11px] font-extrabold text-muted">პორცია</small>
+                  <small className="mt-2 block text-[11px] font-extrabold text-muted">{t("პორცია")}</small>
                 </div>
               </div>
             </Link>
           ) : (
             <div className="soft-card grid content-center rounded-[34px] p-6 text-ink">
-              <h2 className="text-[25px] font-black leading-tight">დღის კერძი</h2>
+              <h2 className="text-[25px] font-black leading-tight">{t("დღის კერძი")}</h2>
               <p className="mt-3 text-sm leading-relaxed text-muted">
-                რეცეპტები ჯერ არ არის დამატებული. პირველი რეცეპტი აქ დღის კერძად გამოჩნდება.
+                {t("რეცეპტები ჯერ არ არის დამატებული. პირველი რეცეპტი აქ დღის კერძად გამოჩნდება.")}
               </p>
               <ButtonLink href="/recipes/add" className="mt-5 w-fit">
                 რეცეპტის დამატება
@@ -147,11 +149,11 @@ export default async function HomePage({
         <Reveal as="section">
           <div className="section-title">
             <div>
-              <h2>აირჩიე სიტუაციით</h2>
-              <p>კატეგორიები დატოვებულია ქცევით ენაზე: რას ამზადებ, ვისთვის და რა დრო გაქვს.</p>
+              <h2>{t("აირჩიე სიტუაციით")}</h2>
+              <p>{t("კატეგორიები დატოვებულია ქცევით ენაზე: რას ამზადებ, ვისთვის და რა დრო გაქვს.")}</p>
             </div>
             <Link href="/categories" className="text-[13px] font-black text-clay no-underline">
-              ყველას ნახვა
+              {t("ყველას ნახვა")}
             </Link>
           </div>
           {categories.length > 0 ? (
@@ -169,8 +171,8 @@ export default async function HomePage({
           <div>
             <div className="section-title mt-0">
               <div>
-                <h2>ტოპ რეცეპტები</h2>
-                <p>ყველაზე მეტად მოწონებული რეცეპტები, რომლებსაც მომხმარებლები ენდობიან.</p>
+                <h2>{t("ტოპ რეცეპტები")}</h2>
+                <p>{t("ყველაზე მეტად მოწონებული რეცეპტები, რომლებსაც მომხმარებლები ენდობიან.")}</p>
               </div>
               <ButtonLink href="/search" variant="secondary">
                 ძიება
@@ -200,8 +202,8 @@ export default async function HomePage({
                     <p className="mt-3 text-sm leading-relaxed text-muted">{featuredRecipe.description}</p>
                     <div className="mt-4 flex flex-wrap gap-3 text-xs font-extrabold text-muted">
                       <span>★ {featuredRecipe.rating.toFixed(1)}</span>
-                      <span>{featuredRecipe.ratingsCount} შეფასება</span>
-                      <span>{featuredRecipe.cookingTime} წთ</span>
+                      <span>{formatRatingCount(locale, featuredRecipe.ratingsCount)}</span>
+                      <span>{formatMinutes(locale, featuredRecipe.cookingTime)}</span>
                     </div>
                   </div>
                 </Link>
@@ -218,34 +220,33 @@ export default async function HomePage({
 
           <aside className="grid content-start gap-4 xl:sticky xl:top-28">
             <SidebarCard title="დღის იდეები">
-              {recipes.length > 0 ? (
+              {dailyIdeas.length > 0 ? (
                 <div className="grid gap-1">
-                  {recipes.slice(0, 4).map((recipe, index) => (
+                  {dailyIdeas.map((recipe, index) => (
                     <div key={recipe.id} className="grid grid-cols-[58px_1fr] items-center gap-3 border-t border-oat py-3 first:border-t-0">
                       <span className="text-xs font-black text-clay">#{index + 1}</span>
                       <div>
                         <strong className="block text-sm font-black text-ink">{recipe.title}</strong>
                         <span className="mt-1 block text-[11px] font-bold text-muted">
-                          {recipe.cookingTime} წთ • {recipe.difficulty}
+                          {formatMinutes(locale, recipe.cookingTime)} • {translateDifficulty(locale, recipe.difficulty)}
                         </span>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p>დღის იდეები აქ გამოჩნდება, როცა პირველი რეცეპტები დაემატება.</p>
+                <p>{t("დღის იდეები აქ გამოჩნდება, როცა პირველი რეცეპტები დაემატება.")}</p>
               )}
             </SidebarCard>
 
             <SidebarCard title="მაცივრიდან იდეამდე" eyebrow="მალე">
               <p>
-                მომავალში Kulera შეძლებს მაცივრის ფოტოდან ინგრედიენტების ამოცნობას და შესაბამისი რეცეპტების
-                შეთავაზებას.
+                {t("მომავალში Kulera შეძლებს მაცივრის ფოტოდან ინგრედიენტების ამოცნობას და შესაბამისი რეცეპტების შეთავაზებას.")}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {["კვერცხი", "მწვანილი", "ყველი", "პომიდორი"].map((item) => (
                   <span key={item} className="rounded-full border border-oat bg-surface px-3 py-2 text-[11px] font-extrabold">
-                    {item}
+                    {t(item)}
                   </span>
                 ))}
               </div>
@@ -256,12 +257,12 @@ export default async function HomePage({
         <Reveal as="section" id="latest-recipes" className="mt-12" amount={0.05}>
           <div className="section-title">
             <div>
-              <h2>ახალი რეცეპტები</h2>
-              <p>ბოლო დამატებული იდეები მოკლე ბარათებით, რომ სწრაფად გადაავლო თვალი.</p>
+              <h2>{t("ახალი რეცეპტები")}</h2>
+              <p>{t("ბოლო დამატებული იდეები მოკლე ბარათებით, რომ სწრაფად გადაავლო თვალი.")}</p>
             </div>
             <span className="inline-flex items-center gap-2 text-[13px] font-black text-muted">
               <Clock className="h-4 w-4 text-clay" />
-              განახლებულია დღეს
+              {t("განახლებულია დღეს")}
             </span>
           </div>
           {latestRecipes.length > 0 ? (
@@ -290,6 +291,5 @@ export default async function HomePage({
         </Reveal>
 
       </main>
-    </PageShell>
   );
 }

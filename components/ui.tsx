@@ -1,13 +1,20 @@
+"use client";
+
 import Link from "next/link";
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { Bookmark, ChevronDown, Star, TriangleAlert } from "lucide-react";
+import { useI18n } from "@/components/i18n-provider";
 import { cn } from "@/lib/cn";
+import { formatRatingCount } from "@/lib/i18n/shared";
 import { Button, ButtonLink, buttonBase, buttonVariants, type ButtonVariant } from "./ui-buttons";
 
 export { Button, ButtonLink };
 export type { ButtonVariant };
 
 export function Badge({ children, className }: { children: ReactNode; className?: string }) {
+  const { t } = useI18n();
+  const content = typeof children === "string" ? t(children) : children;
+
   return (
     <span
       className={cn(
@@ -15,15 +22,17 @@ export function Badge({ children, className }: { children: ReactNode; className?
         className,
       )}
     >
-      {children}
+      {content}
     </span>
   );
 }
 
 export function RatingStars({ value = 5, className }: { value?: number; className?: string }) {
   const rounded = Math.round(value);
+  const { locale } = useI18n();
+
   return (
-    <span className={cn("inline-flex items-center gap-0.5 text-clay", className)} aria-label={`${value} შეფასება`}>
+    <span className={cn("inline-flex items-center gap-0.5 text-clay", className)} aria-label={formatRatingCount(locale, value)}>
       {Array.from({ length: 5 }, (_, index) => (
         <Star key={index} className={cn("h-4 w-4", index < rounded ? "fill-current" : "text-oat")} />
       ))}
@@ -32,6 +41,8 @@ export function RatingStars({ value = 5, className }: { value?: number; classNam
 }
 
 export function BookmarkButton({ saved = false, className }: { saved?: boolean; className?: string }) {
+  const { t } = useI18n();
+
   return (
     <button
       type="button"
@@ -40,7 +51,7 @@ export function BookmarkButton({ saved = false, className }: { saved?: boolean; 
         saved && "border-soft-clay bg-soft-clay text-clay-dark",
         className,
       )}
-      aria-label="რეცეპტის შენახვა"
+      aria-label={t("რეცეპტის შენახვა")}
     >
       <Bookmark
         className={cn(
@@ -72,12 +83,13 @@ export function FilterChips({
   getHref?: (value: string) => string;
 }) {
   const activeValue = active ?? choiceValue(items[0]);
+  const { t } = useI18n();
 
   return (
     <div className="flex gap-2 overflow-x-auto py-1">
       {items.map((item) => {
         const value = choiceValue(item);
-        const label = choiceLabel(item);
+        const label = t(choiceLabel(item));
         const href = typeof item === "string" ? getHref?.(value) : item.href ?? getHref?.(value);
         const className = cn(
           "inline-grid min-h-9 shrink-0 place-items-center rounded-full border px-4 text-xs font-black no-underline transition",
@@ -109,10 +121,12 @@ export function SidebarCard({
   eyebrow?: string;
   className?: string;
 }) {
+  const { t } = useI18n();
+
   return (
     <section className={cn("soft-card rounded-[26px] p-5", className)}>
-      {eyebrow ? <Badge className="mb-3 bg-soft-clay text-wine">{eyebrow}</Badge> : null}
-      <h2 className="text-[22px] font-black leading-tight">{title}</h2>
+      {eyebrow ? <Badge className="mb-3 bg-soft-clay text-wine">{t(eyebrow)}</Badge> : null}
+      <h2 className="text-[22px] font-black leading-tight">{t(title)}</h2>
       <div className="mt-3 text-sm leading-relaxed text-muted">{children}</div>
     </section>
   );
@@ -131,6 +145,8 @@ export function EmptyState({
   action?: ReactNode;
   hidden?: boolean;
 }) {
+  const { t } = useI18n();
+
   if (hidden) return null;
 
   return (
@@ -139,8 +155,8 @@ export function EmptyState({
         <div className="mx-auto mb-5 grid h-[76px] w-[76px] place-items-center rounded-3xl bg-sage-light text-2xl font-black text-sage">
           {mark}
         </div>
-        <h2 className="text-2xl font-black leading-tight">{title}</h2>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">{description}</p>
+        <h2 className="text-2xl font-black leading-tight">{t(title)}</h2>
+        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">{t(description)}</p>
         {action ? <div className="mt-5 flex justify-center">{action}</div> : null}
       </div>
     </section>
@@ -225,6 +241,8 @@ export function ErrorPanel({
   description: string;
   reset: () => void;
 }) {
+  const { t } = useI18n();
+
   return (
     <section
       role="alert"
@@ -234,10 +252,10 @@ export function ErrorPanel({
         <div className="mx-auto mb-5 grid h-[76px] w-[76px] place-items-center rounded-3xl bg-danger/10 text-2xl font-black text-danger">
           !
         </div>
-        <h2 className="text-2xl font-black leading-tight">{title}</h2>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">{description}</p>
+        <h2 className="text-2xl font-black leading-tight">{t(title)}</h2>
+        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">{t(description)}</p>
         <div className="mt-5 flex justify-center">
-          <Button onClick={reset}>თავიდან ცდა</Button>
+          <Button onClick={reset}>{t("თავიდან ცდა")}</Button>
         </div>
       </div>
     </section>
@@ -246,12 +264,13 @@ export function ErrorPanel({
 
 export function Tabs({ items, active }: { items: ChoiceItem[]; active?: string }) {
   const activeValue = active ?? choiceValue(items[0]);
+  const { t } = useI18n();
 
   return (
     <div className="flex w-fit max-w-full gap-1 overflow-x-auto rounded-full border border-oat bg-paper/75 p-1">
       {items.map((item) => {
         const value = choiceValue(item);
-        const label = choiceLabel(item);
+        const label = t(choiceLabel(item));
         const href = typeof item === "string" ? undefined : item.href;
         const className = cn(
           "inline-grid min-h-9 shrink-0 place-items-center rounded-full px-4 text-xs font-black no-underline",
@@ -295,6 +314,8 @@ export function Pagination({
   totalCount: number;
   hashAnchor?: string;
 }) {
+  const { t } = useI18n();
+
   if (totalCount <= pageSize && isFirstPage) return null;
 
   const buildHref = (cursorValue: string | null) => {
@@ -323,7 +344,7 @@ export function Pagination({
 
   return (
     <nav
-      aria-label="გვერდები"
+      aria-label={t("გვერდები")}
       className="mt-6 flex flex-wrap items-center justify-between gap-3"
     >
       <p className="text-xs font-extrabold text-muted">
@@ -332,26 +353,26 @@ export function Pagination({
       <div className="flex gap-2">
         {prevHref ? (
           <ButtonLink variant="secondary" href={prevHref}>
-            წინა
+            {t("წინა")}
           </ButtonLink>
         ) : (
           <span
             className={cn(buttonBase, buttonVariants.secondary, "pointer-events-none opacity-50")}
             aria-hidden="true"
           >
-            წინა
+            {t("წინა")}
           </span>
         )}
         {nextHref ? (
           <ButtonLink variant="secondary" href={nextHref}>
-            შემდეგი
+            {t("შემდეგი")}
           </ButtonLink>
         ) : (
           <span
             className={cn(buttonBase, buttonVariants.secondary, "pointer-events-none opacity-50")}
             aria-hidden="true"
           >
-            შემდეგი
+            {t("შემდეგი")}
           </span>
         )}
       </div>
@@ -375,17 +396,20 @@ export function FormInput({
   error,
   id,
   name,
+  placeholder,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { label: string } & FieldErrorProps) {
   const inputId = fieldId(label, name, id);
   const errorId = error ? `${inputId}-error` : undefined;
+  const { t } = useI18n();
 
   return (
     <label className="grid gap-2">
-      <span className="field-label">{label}</span>
+      <span className="field-label">{t(label)}</span>
       <input
         id={inputId}
         name={name}
+        placeholder={typeof placeholder === "string" ? t(placeholder) : placeholder}
         className={cn("field-control", error && "border-danger", className)}
         aria-invalid={Boolean(error)}
         aria-describedby={errorId}
@@ -393,7 +417,7 @@ export function FormInput({
       />
       {error ? (
         <span id={errorId} className="text-xs font-extrabold text-danger" aria-live="polite">
-          {error}
+          {t(error)}
         </span>
       ) : null}
     </label>
@@ -406,17 +430,20 @@ export function Textarea({
   error,
   id,
   name,
+  placeholder,
   ...props
 }: TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string } & FieldErrorProps) {
   const textareaId = fieldId(label, name, id);
   const errorId = error ? `${textareaId}-error` : undefined;
+  const { t } = useI18n();
 
   return (
     <label className="grid gap-2">
-      <span className="field-label">{label}</span>
+      <span className="field-label">{t(label)}</span>
       <textarea
         id={textareaId}
         name={name}
+        placeholder={typeof placeholder === "string" ? t(placeholder) : placeholder}
         className={cn("field-control min-h-[118px] resize-y py-3 leading-relaxed", error && "border-danger", className)}
         aria-invalid={Boolean(error)}
         aria-describedby={errorId}
@@ -424,7 +451,7 @@ export function Textarea({
       />
       {error ? (
         <span id={errorId} className="text-xs font-extrabold text-danger" aria-live="polite">
-          {error}
+          {t(error)}
         </span>
       ) : null}
     </label>
@@ -442,10 +469,11 @@ export function Select({
 }: SelectHTMLAttributes<HTMLSelectElement> & { label: string } & FieldErrorProps) {
   const selectId = fieldId(label, name, id);
   const errorId = error ? `${selectId}-error` : undefined;
+  const { t } = useI18n();
 
   return (
     <label className="grid gap-2">
-      <span className="field-label">{label}</span>
+      <span className="field-label">{t(label)}</span>
       <div className="relative">
         <select
           id={selectId}
@@ -468,7 +496,7 @@ export function Select({
       </div>
       {error ? (
         <span id={errorId} className="text-xs font-extrabold text-danger" aria-live="polite">
-          {error}
+          {t(error)}
         </span>
       ) : null}
     </label>
@@ -484,6 +512,8 @@ export function Modal({
   description: string;
   children: ReactNode;
 }) {
+  const { t } = useI18n();
+
   return (
     <div className="rounded-[22px] border border-danger/20 bg-danger/5 p-4">
       <div className="flex items-start gap-3">
@@ -491,8 +521,8 @@ export function Modal({
           <TriangleAlert className="h-4 w-4" />
         </div>
         <div>
-          <h3 className="font-black leading-tight text-ink">{title}</h3>
-          <p className="mt-2 text-sm leading-relaxed text-muted">{description}</p>
+          <h3 className="font-black leading-tight text-ink">{t(title)}</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted">{t(description)}</p>
         </div>
       </div>
       <div className="mt-4">{children}</div>

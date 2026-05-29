@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Loader2, Search } from "lucide-react";
 import { useEffect, useId, useRef, useState, useTransition, type FormEvent } from "react";
+import { useI18n } from "@/components/i18n-provider";
+import { formatMinutes, translateCategoryName } from "@/lib/i18n/shared";
 
 type PreviewResult = {
   id: string;
@@ -28,6 +30,7 @@ export function NavbarSearch() {
   const [loading, setLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const listboxId = useId();
+  const { locale, t } = useI18n();
 
   useEffect(() => {
     const trimmed = value.trim();
@@ -104,7 +107,7 @@ export function NavbarSearch() {
       <form onSubmit={handleSubmit} role="search" className="w-full">
         <label
           className="group/search relative isolate inline-flex h-[42px] w-full transform-gpu items-center gap-2 rounded-[15px] border border-oat bg-surface px-4 text-[13px] font-bold text-muted transition-all duration-300 ease-out before:pointer-events-none before:absolute before:inset-x-5 before:-bottom-2 before:-z-10 before:h-3 before:rounded-full before:bg-clay/35 before:opacity-0 before:blur-lg before:transition-all before:duration-300 before:ease-out focus-within:-translate-y-1 focus-within:border-clay focus-within:bg-soft-clay/30 focus-within:text-ink focus-within:shadow-[0_16px_34px_-18px_rgba(182,84,45,0.75)] focus-within:before:opacity-100 hover:-translate-y-1 hover:border-clay hover:bg-soft-clay/40 hover:text-ink hover:shadow-[0_16px_34px_-18px_rgba(182,84,45,0.75)] hover:before:opacity-100 motion-reduce:focus-within:translate-y-0 motion-reduce:hover:translate-y-0"
-          aria-label="რეცეპტის ძიება"
+          aria-label={t("რეცეპტის ძიება")}
         >
           <motion.span
             className="grid place-items-center"
@@ -127,7 +130,7 @@ export function NavbarSearch() {
               setOpen(true);
             }}
             onFocus={() => setOpen(true)}
-            placeholder="კერძი ან ინგრედიენტი"
+            placeholder={t("კერძი ან ინგრედიენტი")}
             aria-autocomplete="list"
             aria-controls={listboxId}
             className="h-full min-w-0 flex-1 bg-transparent text-[13px] font-bold text-ink outline-none placeholder:text-muted"
@@ -148,7 +151,7 @@ export function NavbarSearch() {
           >
             {showLoading && !hasResults ? (
               <div className="grid place-items-center px-4 py-6 text-[13px] font-bold text-muted">
-                ვეძებთ...
+                {t("ვეძებთ...")}
               </div>
             ) : hasResults ? (
               <>
@@ -174,7 +177,7 @@ export function NavbarSearch() {
                             {recipe.title}
                           </span>
                           <span className="truncate text-[11px] font-bold text-muted">
-                            {recipe.categoryName} • {recipe.cookingTime} წთ
+                            {translateCategoryName(locale, recipe.categoryName)} • {formatMinutes(locale, recipe.cookingTime)}
                             {recipe.rating > 0 ? ` • ★ ${recipe.rating.toFixed(1)}` : ""}
                           </span>
                         </span>
@@ -188,19 +191,19 @@ export function NavbarSearch() {
                   disabled={isPending}
                   className="flex w-full items-center justify-center gap-2 border-t border-oat bg-paper/60 px-4 py-3 text-[12px] font-black uppercase tracking-wide text-clay transition-colors duration-200 hover:bg-soft-clay/40 disabled:opacity-60"
                 >
-                  ყველა შედეგი{totalCount > results.length ? ` (${totalCount})` : ""}
+                  {t("ყველა შედეგი")}{totalCount > results.length ? ` (${totalCount})` : ""}
                   <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </>
             ) : (
               <div className="grid gap-2 px-4 py-5 text-center">
-                <span className="text-[13px] font-black text-ink">შედეგი ვერ მოიძებნა</span>
+                <span className="text-[13px] font-black text-ink">{t("შედეგი ვერ მოიძებნა")}</span>
                 <button
                   type="button"
                   onClick={() => goToFullSearch(value)}
                   className="text-[12px] font-bold text-clay underline-offset-2 hover:underline"
                 >
-                  ვცადოთ სრულ ძიებაში
+                  {t("ვცადოთ სრულ ძიებაში")}
                 </button>
               </div>
             )}

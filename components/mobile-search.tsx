@@ -5,11 +5,13 @@ import { Search, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useI18n } from "@/components/i18n-provider";
 import { NavbarSearch } from "@/components/navbar-search";
 
 export function MobileSearchToggle() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const { t } = useI18n();
   const previousPathname = useRef(pathname);
 
   const handleOpen = useCallback(() => setOpen(true), []);
@@ -45,7 +47,7 @@ export function MobileSearchToggle() {
       <motion.button
         type="button"
         onClick={handleOpen}
-        aria-label="ძიება"
+        aria-label={t("ძიება")}
         aria-expanded={open}
         className="grid h-[42px] w-[42px] place-items-center rounded-[15px] border border-oat bg-surface text-ink"
         whileHover={{ y: -2, borderColor: "var(--clay)" }}
@@ -63,11 +65,11 @@ export function MobileSearchToggle() {
                   className="fixed inset-0 z-[100] md:hidden"
                   role="dialog"
                   aria-modal="true"
-                  aria-label="ძიება"
+                  aria-label={t("ძიება")}
                 >
                   <motion.button
                     type="button"
-                    aria-label="დახურვა"
+                    aria-label={t("დახურვა")}
                     onClick={handleClose}
                     className="absolute inset-0 bg-ink/45 backdrop-blur-sm"
                     initial={{ opacity: 0 }}
@@ -83,11 +85,11 @@ export function MobileSearchToggle() {
                     transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[12px] font-black uppercase tracking-wider text-muted">ძიება</span>
+                      <span className="text-[12px] font-black uppercase tracking-wider text-muted">{t("ძიება")}</span>
                       <button
                         type="button"
                         onClick={handleClose}
-                        aria-label="დახურვა"
+                        aria-label={t("დახურვა")}
                         className="grid h-9 w-9 place-items-center rounded-[12px] border border-oat bg-surface text-ink"
                       >
                         <X className="h-4 w-4" />

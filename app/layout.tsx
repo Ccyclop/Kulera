@@ -1,27 +1,41 @@
 import type { Metadata } from "next";
+import { I18nProvider } from "@/components/i18n-provider";
+import { PageShell } from "@/components/page-shell";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/shared";
 import { mersad } from "./fonts";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: {
-    default: "Kulera - კულინარიის კერა",
-    template: "%s - Kulera",
-  },
-  description: "ქართული რეცეპტების პლატფორმა ყოველდღიური სამზარეულოსთვის.",
-  icons: {
-    icon: [{ url: "/brand/kulera-app-icon.png", type: "image/png" }],
-    apple: [{ url: "/brand/kulera-app-icon.png", type: "image/png" }],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
 
-export default function RootLayout({
+  return {
+    title: {
+      default: translate(locale, "Kulera - კულინარიის კერა"),
+      template: "%s - Kulera",
+    },
+    description: translate(locale, "ქართული რეცეპტების პლატფორმა ყოველდღიური სამზარეულოსთვის."),
+    icons: {
+      icon: [{ url: "/brand/kulera-app-icon.png", type: "image/png" }],
+      apple: [{ url: "/brand/kulera-app-icon.png", type: "image/png" }],
+    },
+  };
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
-    <html lang="ka" className={mersad.variable} data-scroll-behavior="smooth">
-      <body>{children}</body>
+    <html lang={locale} className={mersad.variable} data-scroll-behavior="smooth">
+      <body>
+        <I18nProvider initialLocale={locale}>
+          <PageShell>{children}</PageShell>
+        </I18nProvider>
+      </body>
     </html>
   );
 }

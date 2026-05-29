@@ -3,12 +3,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useI18n } from "@/components/i18n-provider";
+import { formatMinutes, formatRatingCount, translateCategoryName } from "@/lib/i18n/shared";
 import type { Recipe } from "@/lib/types";
 import { Badge } from "./ui";
 
 const cardSpring = { type: "spring" as const, stiffness: 320, damping: 24 };
 
 export function RecipeCard({ recipe }: { recipe: Recipe }) {
+  const { locale } = useI18n();
+  const categoryName = translateCategoryName(locale, recipe.categoryName);
+
   return (
     <motion.div
       whileHover={{ y: -8, scale: 1.015 }}
@@ -35,19 +40,19 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
           />
           <div className="absolute left-3 top-3 translate-y-1 opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100">
             <span className="rounded-full bg-surface/95 px-3 py-1 text-[10px] font-black text-clay shadow-soft">
-              {recipe.cookingTime} წთ • ★ {recipe.rating.toFixed(1)}
+              {formatMinutes(locale, recipe.cookingTime)} • ★ {recipe.rating.toFixed(1)}
             </span>
           </div>
         </div>
         <div className="p-4">
-          <Badge>{recipe.categoryName}</Badge>
+          <Badge>{categoryName}</Badge>
           <h3 className="mt-3 text-lg font-black leading-snug transition-colors duration-200 group-hover:text-clay">
             {recipe.title}
           </h3>
           <div className="mt-4 flex flex-wrap gap-2 text-xs font-extrabold text-muted">
             <span>★ {recipe.rating.toFixed(1)}</span>
-            <span>{recipe.ratingsCount} შეფასება</span>
-            <span>{recipe.cookingTime} წთ</span>
+            <span>{formatRatingCount(locale, recipe.ratingsCount)}</span>
+            <span>{formatMinutes(locale, recipe.cookingTime)}</span>
           </div>
         </div>
       </Link>
@@ -56,6 +61,8 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
 }
 
 export function CompactRecipeRow({ recipe, index }: { recipe: Recipe; index: number }) {
+  const { locale } = useI18n();
+
   return (
     <motion.div
       whileHover={{ y: -4, scale: 1.01 }}
@@ -81,7 +88,7 @@ export function CompactRecipeRow({ recipe, index }: { recipe: Recipe; index: num
             {recipe.title}
           </h3>
           <p className="mt-2 text-xs font-bold text-muted">
-            {recipe.categoryName} • {recipe.cookingTime} წთ • ★ {recipe.rating.toFixed(1)}
+            {translateCategoryName(locale, recipe.categoryName)} • {formatMinutes(locale, recipe.cookingTime)} • ★ {recipe.rating.toFixed(1)}
           </p>
         </div>
         <span className="hidden h-[34px] w-[34px] place-items-center rounded-full border border-oat text-xs font-black text-clay transition-all duration-300 group-hover:scale-110 group-hover:border-clay group-hover:bg-soft-clay md:grid">
@@ -93,6 +100,8 @@ export function CompactRecipeRow({ recipe, index }: { recipe: Recipe; index: num
 }
 
 export function LatestRecipeCard({ recipe }: { recipe: Recipe }) {
+  const { locale } = useI18n();
+
   return (
     <motion.div
       whileHover={{ y: -5, scale: 1.012 }}
@@ -118,7 +127,7 @@ export function LatestRecipeCard({ recipe }: { recipe: Recipe }) {
             {recipe.title}
           </strong>
           <span className="mt-2 block text-[11px] font-extrabold text-muted">
-            {recipe.cookingTime} წთ • ★ {recipe.rating.toFixed(1)}
+            {formatMinutes(locale, recipe.cookingTime)} • ★ {recipe.rating.toFixed(1)}
           </span>
         </div>
       </Link>

@@ -7,6 +7,8 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Heart, Home, LogIn, Menu, Plus, Search, UserRound, X } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useI18n } from "@/components/i18n-provider";
 import { cn } from "@/lib/cn";
 
 const drawerLinks = [
@@ -28,11 +30,13 @@ const tabs = [
 ];
 
 export function MobileMenuButton({ onOpen, open }: { onOpen: () => void; open: boolean }) {
+  const { t } = useI18n();
+
   return (
     <motion.button
       type="button"
       onClick={onOpen}
-      aria-label="მენიუს გახსნა"
+      aria-label={t("მენიუს გახსნა")}
       aria-expanded={open}
       className="grid h-[42px] w-[42px] place-items-center rounded-[15px] border border-oat bg-surface text-ink md:hidden"
       whileHover={{ y: -2, borderColor: "var(--clay)" }}
@@ -60,6 +64,7 @@ export function MobileDrawer({
   isAuthenticated: boolean;
 }) {
   const pathname = usePathname();
+  const { t } = useI18n();
   const previousPathname = useRef(pathname);
 
   useEffect(() => {
@@ -98,12 +103,12 @@ export function MobileDrawer({
           className="fixed inset-0 z-[100] md:hidden"
           role="dialog"
           aria-modal="true"
-          aria-label="ნავიგაცია"
+          aria-label={t("ნავიგაცია")}
           initial={{ pointerEvents: "auto" }}
         >
           <motion.button
             type="button"
-            aria-label="დახურვა"
+            aria-label={t("დახურვა")}
             onClick={onClose}
             className="absolute inset-0 bg-ink/45 backdrop-blur-sm"
             initial={{ opacity: 0 }}
@@ -123,7 +128,7 @@ export function MobileDrawer({
               <motion.button
                 type="button"
                 onClick={onClose}
-                aria-label="დახურვა"
+                aria-label={t("დახურვა")}
                 className="grid h-10 w-10 place-items-center rounded-[15px] border border-oat bg-surface text-ink"
                 whileHover={{ rotate: 90, borderColor: "var(--clay)" }}
                 whileTap={{ scale: 0.9 }}
@@ -132,7 +137,10 @@ export function MobileDrawer({
                 <X className="h-5 w-5" />
               </motion.button>
             </div>
-            <nav className="grid gap-1" aria-label="მობილური ნავიგაცია">
+            <div className="mb-4">
+              <LanguageSwitcher className="w-full justify-center" />
+            </div>
+            <nav className="grid gap-1" aria-label={t("მობილური ნავიგაცია")}>
               {drawerLinks.map((link) => {
                 const isActive =
                   link.href === "/"
@@ -150,7 +158,7 @@ export function MobileDrawer({
                         : "text-ink hover:translate-x-1 hover:bg-paper active:scale-[0.98]",
                     )}
                   >
-                    {link.label}
+                    {t(link.label)}
                   </Link>
                 );
               })}
@@ -162,7 +170,7 @@ export function MobileDrawer({
                   className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-[15px] border border-oat bg-surface px-4 text-sm font-black text-ink no-underline transition-all duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
                 >
                   <UserRound className="h-4 w-4" />
-                  პროფილი
+                  {t("პროფილი")}
                 </Link>
               ) : (
                 <Link
@@ -170,7 +178,7 @@ export function MobileDrawer({
                   className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-[15px] border border-clay bg-clay px-4 text-sm font-black text-white no-underline transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-clay-dark active:translate-y-0 active:scale-[0.98]"
                 >
                   <LogIn className="h-4 w-4" />
-                  შესვლა
+                  {t("შესვლა")}
                 </Link>
               )}
             </div>
@@ -184,10 +192,11 @@ export function MobileDrawer({
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const { t } = useI18n();
 
   return (
     <motion.nav
-      aria-label="მობილური ნავიგაცია"
+      aria-label={t("მობილური ნავიგაცია")}
       className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 gap-1 border-t border-oat bg-surface/95 px-2 pb-[max(env(safe-area-inset-bottom),8px)] pt-2 backdrop-blur-xl md:hidden"
       initial={{ y: 24, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
@@ -226,7 +235,7 @@ export function MobileBottomNav() {
                 <Icon className="h-4 w-4" />
               </motion.span>
             </span>
-            <span className="leading-tight">{tab.label}</span>
+            <span className="leading-tight">{t(tab.label)}</span>
           </Link>
         );
       })}

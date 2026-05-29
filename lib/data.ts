@@ -6,6 +6,9 @@ import { cookScore } from "./ranking";
 import { getAvatarUrl, getRecipeImageUrl, getRecipeVideoUrl } from "./storage";
 import { hasSupabaseConfig } from "./supabase/env";
 import { createClient } from "./supabase/server";
+import { matchesCategoryQuery, matchesSearchQuery } from "./search";
+import { matchRecipe, type RecipeMatch } from "./pantry/match";
+import type { PantryState } from "./pantry/url";
 
 const recipeSelect =
   "id,user_id,category_id,title,slug,description,image_url,video_url,cooking_time,difficulty,servings,ingredients,steps,status,created_at,category:categories(id,name,slug,description),creator:profiles(id,full_name,username,bio,avatar_url)";
@@ -366,38 +369,6 @@ function logSupabaseError(scope: string, error: SupabaseError | null) {
   }
 }
 
-function isMissingSearchVectorError(error: SupabaseError | null) {
-  if (!error) return false;
-
-  return error.code === "42703" || /search_vector.*does not exist/i.test(error.message);
-}
-
-function queryTokens(query: string) {
-  return query
-    .split(/\s+/)
-    .map((token) => token.trim().toLocaleLowerCase("ka-GE"))
-    .filter(Boolean);
-}
-
-function recipeSearchText(recipe: Recipe) {
-  return [
-    recipe.title,
-    recipe.description,
-    recipe.categoryName,
-    ...recipe.ingredients.map((ingredient) => `${ingredient.amount} ${ingredient.name}`),
-  ]
-    .join(" ")
-    .toLocaleLowerCase("ka-GE");
-}
-
-function matchesSearchQuery(recipe: Recipe, query: string) {
-  const tokens = queryTokens(query);
-  if (tokens.length === 0) return true;
-
-  const text = recipeSearchText(recipe);
-  return tokens.every((token) => text.includes(token));
-}
-
 function matchesCookingTime(recipe: Recipe, cookingTime?: CookingTimeFilter) {
   if (!cookingTime) return true;
 
@@ -512,44 +483,20 @@ function mapRecipeEntries(rows: RecipeQueryRow[], statsById: Map<string, RecipeS
   });
 }
 
-async function fetchPublishedRecipeEntries(searchQuery?: string): Promise<RecipeEntry[]> {
+async function fetchPublishedRecipeEntries(): Promise<RecipeEntry[]> {
   const supabase = await getClientOrNull();
   if (!supabase) return [];
 
-  let query = supabase
-    .from("recipes")
-    .select(recipeSelect)
-    .eq("status", "published");
-
-  if (searchQuery) {
-    query = query.textSearch("search_vector", searchQuery, {
-      config: "simple",
-      type: "websearch",
-    });
-  }
-
   const [{ data, error }, statsById] = await Promise.all([
-    query.order("created_at", { ascending: false }),
-    getRecipeStatsById(supabase),
-  ]);
-
-  if (searchQuery && isMissingSearchVectorError(error)) {
-    const { data: fallbackData, error: fallbackError } = await supabase
+    supabase
       .from("recipes")
       .select(recipeSelect)
       .eq("status", "published")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false }),
+    getRecipeStatsById(supabase),
+  ]);
 
-    logSupabaseError("recipe-search-fallback", fallbackError);
-
-    if (fallbackError || !fallbackData) return [];
-
-    return mapRecipeEntries(fallbackData as unknown as RecipeQueryRow[], statsById).filter((entry) =>
-      matchesSearchQuery(entry.recipe, searchQuery),
-    );
-  }
-
-  logSupabaseError(searchQuery ? "recipe-search" : "recipes", error);
+  logSupabaseError("recipes", error);
 
   if (error || !data) return [];
 
@@ -574,6 +521,41 @@ export async function getTopRecipes(limit = 5) {
 export async function getLatestRecipes(limit = 4) {
   const recipes = await getRecipes({ sort: "newest" });
   return recipes.slice(0, limit);
+}
+
+function tbilisiDayNumber(now = new Date()) {
+  const tbilisiMs = now.getTime() + 4 * 60 * 60 * 1000;
+  return Math.floor(tbilisiMs / (24 * 60 * 60 * 1000));
+}
+
+function mulberry32(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function seededShuffle<T>(items: T[], seed: number): T[] {
+  const arr = [...items];
+  const rand = mulberry32(seed);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+export async function getDailyPicks({ poolSize = 20, count = 5 } = {}) {
+  const entries = await getPublishedRecipeEntries();
+  const pool = filterAndSortRecipeEntries(entries, { sort: "top-rated" })
+    .slice(0, poolSize)
+    .map((entry) => entry.recipe);
+  if (pool.length === 0) return [];
+  return seededShuffle(pool, tbilisiDayNumber()).slice(0, Math.min(count, pool.length));
 }
 
 export async function getRecipeBySlug(slug: string) {
@@ -636,14 +618,62 @@ export async function getOwnedRecipes(userId: string): Promise<Recipe[]> {
 }
 
 export async function searchRecipes(query: string, filters: RecipeFilters = {}) {
-  const normalizedQuery = query.trim().toLocaleLowerCase("ka-GE");
+  const trimmed = query.trim();
 
-  if (!normalizedQuery) {
+  if (!trimmed) {
     return getRecipes(filters);
   }
 
-  const entries = await fetchPublishedRecipeEntries(normalizedQuery);
-  return filterAndSortRecipeEntries(entries, filters).map((entry) => entry.recipe);
+  const entries = await getPublishedRecipeEntries();
+  const matched = entries.filter((entry) => matchesSearchQuery(entry.recipe, trimmed));
+  return filterAndSortRecipeEntries(matched, filters).map((entry) => entry.recipe);
+}
+
+export type PantryRecipeResult = {
+  recipe: Recipe;
+  match: RecipeMatch;
+};
+
+export async function getPantryRecipes(
+  pantry: PantryState,
+  filters: RecipeFilters = {},
+): Promise<PantryRecipeResult[]> {
+  if (pantry.ids.length === 0 && pantry.freeText.length === 0) {
+    return [];
+  }
+
+  const entries = await getPublishedRecipeEntries();
+  const pantryInput = {
+    ids: new Set(pantry.ids),
+    freeText: pantry.freeText,
+    basics: pantry.basics,
+  };
+
+  const matched = entries
+    .filter((entry) => entry.recipe.ingredients.length > 0)
+    .filter((entry) => matchesRecipeFilters(entry.recipe, filters))
+    .map((entry) => ({ entry, match: matchRecipe(entry.recipe, pantryInput) }))
+    .filter(({ match }) => match.missingCount <= pantry.maxMissing);
+
+  matched.sort((a, b) => {
+    if (a.match.missingCount !== b.match.missingCount) {
+      return a.match.missingCount - b.match.missingCount;
+    }
+    if (a.entry.score !== b.entry.score) {
+      return b.entry.score - a.entry.score;
+    }
+    return Date.parse(b.entry.recipe.createdAt) - Date.parse(a.entry.recipe.createdAt);
+  });
+
+  return matched.map(({ entry, match }) => ({ recipe: entry.recipe, match }));
+}
+
+export async function searchCategories(query: string): Promise<Category[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+
+  const categories = await getCategories();
+  return categories.filter((category) => matchesCategoryQuery(category, trimmed));
 }
 
 export async function getRecipeComments(recipe: Recipe): Promise<Comment[]> {

@@ -4,6 +4,7 @@ import { Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
+import { useI18n } from "@/components/i18n-provider";
 import { AVATAR_BUCKET, RECIPE_BUCKET, getAvatarUrl, getRecipeImageUrl } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/client";
 
@@ -85,6 +86,7 @@ export function ImageUploader({
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const objectUrlRef = useRef<string | null>(null);
+  const { t } = useI18n();
 
   useEffect(() => {
     return () => {
@@ -179,7 +181,7 @@ export function ImageUploader({
 
   return (
     <div className="grid gap-2">
-      <span className="field-label">{label}</span>
+      <span className="field-label">{t(label)}</span>
       <div
         onDragOver={(event) => {
           event.preventDefault();
@@ -202,7 +204,7 @@ export function ImageUploader({
         {hasPreview ? (
           <Image
             src={previewUrl}
-            alt={`${label} preview`}
+            alt={`${t(label)} preview`}
             fill
             sizes="(max-width: 768px) 100vw, 600px"
             className="object-cover"
@@ -218,9 +220,9 @@ export function ImageUploader({
             <span className="grid h-14 w-14 place-items-center rounded-2xl bg-soft-clay text-clay-dark">
               <Upload className="h-5 w-5" aria-hidden />
             </span>
-            <strong className="block text-lg font-black">ფოტო</strong>
+            <strong className="block text-lg font-black">{t("ფოტო")}</strong>
             <span id={helperId} className="block text-sm leading-relaxed text-muted">
-              {helper}
+              {t(helper)}
             </span>
           </button>
         )}
@@ -246,7 +248,7 @@ export function ImageUploader({
               className="inline-flex min-h-9 items-center gap-1 rounded-full bg-surface/95 px-3 text-[12px] font-black text-ink shadow focus:outline-none focus-visible:ring-4 focus-visible:ring-soft-clay/60"
             >
               <Upload className="h-3.5 w-3.5" aria-hidden />
-              შეცვლა
+              {t("შეცვლა")}
             </button>
             <button
               type="button"
@@ -254,21 +256,21 @@ export function ImageUploader({
               className="inline-flex min-h-9 items-center gap-1 rounded-full bg-danger/90 px-3 text-[12px] font-black text-white shadow focus:outline-none focus-visible:ring-4 focus-visible:ring-danger/30"
             >
               <X className="h-3.5 w-3.5" aria-hidden />
-              წაშლა
+              {t("წაშლა")}
             </button>
           </div>
         ) : null}
 
         {status === "uploading" ? (
           <div className="absolute inset-0 grid place-items-center bg-surface/70 text-sm font-black text-ink" role="status" aria-live="polite">
-            იტვირთება…
+            {t("იტვირთება…")}
           </div>
         ) : null}
       </div>
 
       {error ? (
         <span id={errorId} className="text-sm font-bold text-danger" role="alert">
-          {error}
+          {t(error)}
         </span>
       ) : null}
 

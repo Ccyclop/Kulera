@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useI18n } from "@/components/i18n-provider";
 import type { FilterOption } from "@/lib/content-options";
 import { Select } from "./ui";
 
@@ -22,6 +23,7 @@ export function QuerySelect({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useI18n();
 
   return (
     <Select
@@ -46,7 +48,7 @@ export function QuerySelect({
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>
-          {option.label}
+          {t(option.label)}
         </option>
       ))}
     </Select>
