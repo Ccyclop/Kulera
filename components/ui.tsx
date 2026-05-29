@@ -74,7 +74,7 @@ export function FilterChips({
   const activeValue = active ?? choiceValue(items[0]);
 
   return (
-    <div className="-mx-1 flex gap-2 overflow-x-auto px-1 py-1">
+    <div className="flex gap-2 overflow-x-auto py-1">
       {items.map((item) => {
         const value = choiceValue(item);
         const label = choiceLabel(item);

@@ -54,21 +54,21 @@ export default async function SearchPage({
   return (
     <PageShell>
       <main className="page-main">
-        <Reveal as="section" className="mb-8 grid gap-7 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-end">
-          <div className="hero-panel min-h-[280px]">
+        <Reveal as="section" className="mb-6 flex flex-col gap-5 xl:mb-8 xl:grid xl:gap-7 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-end">
+          <div className="hero-panel min-h-[200px] md:min-h-[280px]">
             <p className="eyebrow">ძიება</p>
-            <h1 className="text-[clamp(42px,5vw,74px)] font-black leading-none tracking-normal">
+            <h1 className="text-[clamp(34px,5vw,74px)] font-black leading-none tracking-normal">
               <HeroTitle text="ძიების შედეგები" />
             </h1>
-            <p className="mt-4 max-w-2xl text-base font-medium leading-relaxed text-muted">
+            <p className="mt-3 max-w-2xl text-sm font-medium leading-relaxed text-muted md:mt-4 md:text-base">
               {summary} შეცვალე ტექსტი ან გამოიყენე ფილტრები.
             </p>
-            <div className="mt-6 max-w-3xl">
+            <div className="mt-5 max-w-3xl md:mt-6">
               <SearchInput key={query} initialQuery={query} placeholder="რეცეპტი ან ინგრედიენტი" />
             </div>
             <span className="hero-watermark">Search</span>
           </div>
-          <aside className="soft-card rounded-[26px] p-5">
+          <aside className="soft-card hidden rounded-[26px] p-5 xl:block">
             <strong className="block text-xl font-black leading-tight">სწრაფი არჩევა</strong>
             <p className="mt-2 text-sm leading-relaxed text-muted">
               გამოიყენე კატეგორია, დრო და დალაგება, რომ ყოველდღიური არჩევანი სწრაფად შეამცირო.
@@ -76,10 +76,10 @@ export default async function SearchPage({
           </aside>
         </Reveal>
 
-        <section className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_340px]">
-          <div>
-            <div className="soft-card mb-5 grid gap-4 rounded-[26px] p-4">
-              <div>
+        <section className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-7">
+          <div className="min-w-0">
+            <div className="soft-card mb-5 flex flex-col gap-4 overflow-hidden rounded-[24px] p-3 md:rounded-[26px] md:p-4">
+              <div className="min-w-0">
                 <span className="mb-2 block text-xs font-black text-muted">კატეგორია</span>
                 <FilterChips
                   items={categoryOptions}
@@ -87,7 +87,7 @@ export default async function SearchPage({
                   getHref={(value) => pathWithSearchParams("/search", params, { category: value, cursor: null })}
                 />
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="mb-2 block text-xs font-black text-muted">მომზადების დრო</span>
                 <FilterChips
                   items={timeFilterOptions}
@@ -95,7 +95,7 @@ export default async function SearchPage({
                   getHref={(value) => pathWithSearchParams("/search", params, { time: value, cursor: null })}
                 />
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="mb-2 block text-xs font-black text-muted">სირთულე</span>
                 <FilterChips
                   items={difficultyFilterOptions}
@@ -103,14 +103,14 @@ export default async function SearchPage({
                   getHref={(value) => pathWithSearchParams("/search", params, { difficulty: value, cursor: null })}
                 />
               </div>
-              <div className="max-w-xs">
+              <div className="w-full max-w-xs">
                 <QuerySelect label="დალაგება" name="sort" value={sort} options={sortOptions} />
               </div>
             </div>
 
             {page.items.length > 0 ? (
               <>
-                <Stagger as="div" className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" stagger={0.06}>
+                <Stagger as="div" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" stagger={0.06}>
                   {page.items.map((recipe) => (
                     <RecipeCard key={recipe.id} recipe={recipe} />
                   ))}
@@ -137,7 +137,7 @@ export default async function SearchPage({
             </div>
           </div>
 
-          <aside className="grid content-start gap-4 xl:sticky xl:top-28">
+          <aside className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-28">
             <SidebarCard title="პოპულარული ძიებები">
               {popularSearches.length > 0 ? (
                 <div className="flex flex-wrap gap-2">

@@ -91,7 +91,7 @@ export function SearchInput({
           }
         />
       </label>
-      <Button type="submit" className="min-h-[52px] md:min-w-[132px]" disabled={isPending}>
+      <Button type="submit" className="w-full min-h-[52px] md:w-auto md:min-w-[132px]" disabled={isPending}>
         ვიპოვოთ
       </Button>
     </motion.form>

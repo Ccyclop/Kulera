@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Heart, LogIn, Plus, Search, UserRound } from "lucide-react";
+import { Heart, LogIn, Plus, UserRound } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { MobileNavToggle } from "@/components/mobile-nav";
+import { MobileSearchToggle } from "@/components/mobile-search";
 import { NavbarSearch } from "@/components/navbar-search";
 import { cn } from "@/lib/cn";
 
@@ -127,13 +128,7 @@ export function SiteHeader({ isAuthenticated = false }: { isAuthenticated?: bool
       </div>
 
       <div className="flex items-center gap-2 justify-self-end md:hidden">
-        <Link
-          href="/search"
-          aria-label="ძიება"
-          className="grid h-[42px] w-[42px] place-items-center rounded-[15px] border border-oat bg-surface text-ink no-underline"
-        >
-          <Search className="h-4 w-4" />
-        </Link>
+        <MobileSearchToggle />
         <MobileNavToggle isAuthenticated={isAuthenticated} />
       </div>
     </motion.header>
