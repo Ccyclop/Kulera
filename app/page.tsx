@@ -41,7 +41,7 @@ export default async function HomePage({
   return (
     <PageShell>
       <main className="page-main">
-        <section className="grid min-h-[536px] gap-6 2xl:grid-cols-[minmax(0,1fr)_400px]">
+        <section className="grid min-h-[536px] grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1fr)_400px]">
           <div className="relative overflow-hidden rounded-[30px] bg-ink px-6 py-9 text-[#FFF9EF] shadow-panel md:px-14 md:py-[52px]">
             <div className="pointer-events-none absolute inset-0 opacity-[0.12] [background:linear-gradient(90deg,transparent_0_50%,rgba(255,255,255,.24)_50%_51%,transparent_51%)_0_0/40px_40px,linear-gradient(0deg,transparent_0_50%,rgba(255,255,255,.18)_50%_51%,transparent_51%)_0_0/40px_40px]" />
             <Floating
@@ -155,7 +155,7 @@ export default async function HomePage({
             </Link>
           </div>
           {categories.length > 0 ? (
-            <Stagger as="div" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" stagger={0.05} childVariant="popIn">
+            <Stagger as="div" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" stagger={0.05} childVariant="popIn">
               {categories.map((category) => (
                 <CategoryCard key={category.id} category={category} />
               ))}
@@ -165,7 +165,7 @@ export default async function HomePage({
           )}
         </Reveal>
 
-        <Reveal as="section" className="mt-12 grid gap-7 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <Reveal as="section" className="mt-12 grid grid-cols-1 gap-7 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div>
             <div className="section-title mt-0">
               <div>
@@ -266,7 +266,7 @@ export default async function HomePage({
           </div>
           {latestRecipes.length > 0 ? (
             <>
-              <Stagger as="div" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" stagger={0.08}>
+              <Stagger as="div" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" stagger={0.08}>
                 {latestRecipes.map((recipe) => (
                   <LatestRecipeCard key={recipe.id} recipe={recipe} />
                 ))}

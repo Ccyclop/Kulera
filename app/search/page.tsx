@@ -54,7 +54,7 @@ export default async function SearchPage({
   return (
     <PageShell>
       <main className="page-main">
-        <Reveal as="section" className="mb-6 grid gap-5 xl:mb-8 xl:gap-7 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-end">
+        <Reveal as="section" className="mb-6 flex flex-col gap-5 xl:mb-8 xl:grid xl:gap-7 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-end">
           <div className="hero-panel min-h-[200px] md:min-h-[280px]">
             <p className="eyebrow">ძიება</p>
             <h1 className="text-[clamp(34px,5vw,74px)] font-black leading-none tracking-normal">
@@ -76,8 +76,8 @@ export default async function SearchPage({
           </aside>
         </Reveal>
 
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-7">
-          <div>
+        <section className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-7">
+          <div className="min-w-0">
             <div className="soft-card mb-5 grid gap-4 rounded-[24px] p-3 md:rounded-[26px] md:p-4">
               <div>
                 <span className="mb-2 block text-xs font-black text-muted">კატეგორია</span>
@@ -110,7 +110,7 @@ export default async function SearchPage({
 
             {page.items.length > 0 ? (
               <>
-                <Stagger as="div" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" stagger={0.06}>
+                <Stagger as="div" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" stagger={0.06}>
                   {page.items.map((recipe) => (
                     <RecipeCard key={recipe.id} recipe={recipe} />
                   ))}
@@ -137,7 +137,7 @@ export default async function SearchPage({
             </div>
           </div>
 
-          <aside className="grid content-start gap-4 xl:sticky xl:top-28">
+          <aside className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-28">
             <SidebarCard title="პოპულარული ძიებები">
               {popularSearches.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
