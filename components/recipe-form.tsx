@@ -7,7 +7,8 @@ import { useFieldArray, useForm, type Resolver } from "react-hook-form";
 import { Eye, Plus, Trash2, X } from "lucide-react";
 import { FocusDialog } from "@/components/focus-dialog";
 import { ImageUploader } from "@/components/image-uploader";
-import type { Category, Ingredient, Recipe } from "@/lib/types";
+import { VideoUploader } from "@/components/video-uploader";
+import type { Category, Ingredient, Recipe, RecipeStep } from "@/lib/types";
 import {
   recipeDraftFormSchema,
   recipePublishFormSchema,
@@ -24,7 +25,7 @@ type RecipeIntent = RecipeSubmitIntent | "delete";
 
 function makeIngredientRows(ingredients: Ingredient[] = []) {
   const rows = ingredients.map((ingredient) => ({
-    amount: ingredient.amount,
+    amount: ingredient.amount || "",
     name: ingredient.name,
   }));
 
@@ -35,11 +36,21 @@ function makeIngredientRows(ingredients: Ingredient[] = []) {
   return rows;
 }
 
+function durationToMinutes(step: RecipeStep) {
+  if (step.durationSeconds == null) return "";
+  const minutes = step.durationSeconds / 60;
+  if (Number.isInteger(minutes)) return String(minutes);
+  return String(Math.round(minutes * 10) / 10);
+}
+
 function makeStepRows(recipe?: Recipe) {
-  const rows = (recipe?.steps ?? []).map((step) => ({ body: step.body }));
+  const rows = (recipe?.steps ?? []).map((step) => ({
+    body: step.body,
+    duration: durationToMinutes(step),
+  }));
 
   while (rows.length < 3) {
-    rows.push({ body: "" });
+    rows.push({ body: "", duration: "" });
   }
 
   return rows;
@@ -54,6 +65,7 @@ function recipeDefaultValues(recipe?: Recipe): RecipeFormValues {
     difficulty: recipe?.difficulty ?? "მარტივი",
     servings: recipe?.servings ?? "",
     imageUrl: recipe?.imagePath ?? "",
+    videoUrl: recipe?.videoPath ?? recipe?.videoUrl ?? "",
     ingredients: makeIngredientRows(recipe?.ingredients),
     steps: makeStepRows(recipe),
   };
@@ -150,6 +162,7 @@ export function RecipeForm({
     formData.set("difficulty", values.difficulty);
     formData.set("servings", values.servings);
     formData.set("imageUrl", values.imageUrl);
+    formData.set("videoUrl", values.videoUrl);
 
     values.ingredients.forEach((ingredient, index) => {
       formData.set(`ingredients.${index}.name`, ingredient.name);
@@ -158,6 +171,7 @@ export function RecipeForm({
 
     values.steps.forEach((step, index) => {
       formData.set(`steps.${index}.body`, step.body);
+      formData.set(`steps.${index}.duration`, step.duration ?? "");
     });
 
     return formData;
@@ -213,6 +227,17 @@ export function RecipeForm({
     removeIngredient(index);
   }
 
+  function addStepRowAt(focusNext = true) {
+    const nextIndex = stepFields.length;
+    appendStep({ body: "", duration: "" });
+    if (focusNext) focusStep(nextIndex);
+  }
+
+  function resetStepRows() {
+    replaceSteps([{ body: "", duration: "" }]);
+    focusStep(0);
+  }
+
   function handleAmountKeyDown(index: number, event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key !== "Enter") return;
 
@@ -231,15 +256,12 @@ export function RecipeForm({
   }
 
   function addStepRow(focusNext = true) {
-    const nextIndex = stepFields.length;
-    appendStep({ body: "" });
-    if (focusNext) focusStep(nextIndex);
+    addStepRowAt(focusNext);
   }
 
   function removeStepRow(index: number) {
     if (stepFields.length <= 1) {
-      replaceSteps([{ body: "" }]);
-      focusStep(0);
+      resetStepRows();
       return;
     }
 
@@ -254,6 +276,7 @@ export function RecipeForm({
       <input type="hidden" name="recipeId" value={recipe?.id ?? ""} />
       <input type="hidden" name="redirectTo" value={isEdit && recipe ? `/recipes/${recipe.slug}/edit` : "/recipes/add"} />
       <input type="hidden" {...register("imageUrl")} />
+      <input type="hidden" {...register("videoUrl")} />
 
       {state.formError ? (
         <div
@@ -401,13 +424,14 @@ export function RecipeForm({
             {stepFields.map((step, index) => {
               const bodyError = errorMessage(errors.steps?.[index]?.body);
               const bodyErrorId = bodyError ? `step-${step.id}-body-error` : undefined;
+              const durationError = errorMessage(errors.steps?.[index]?.duration);
 
               return (
                 <div key={step.id} className="grid gap-2 rounded-[18px] border border-oat bg-[#FAF6F0] p-2 sm:grid-cols-[44px_minmax(0,1fr)_42px] sm:items-start">
                   <div className="grid h-12 w-11 place-items-center rounded-[14px] border border-oat bg-surface text-sm font-black text-muted" aria-hidden>
                     {index + 1}
                   </div>
-                  <div className="grid gap-1">
+                  <div className="grid gap-2">
                     <textarea
                       {...register(`steps.${index}.body`)}
                       rows={1}
@@ -420,6 +444,29 @@ export function RecipeForm({
                     {bodyError ? (
                       <span id={bodyErrorId} className="text-xs font-extrabold text-danger" aria-live="polite">
                         {bodyError}
+                      </span>
+                    ) : null}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="inline-flex items-center gap-2 rounded-[12px] border border-oat bg-surface px-3 py-1.5 text-xs font-black text-muted">
+                        <span>ტაიმერი</span>
+                        <input
+                          {...register(`steps.${index}.duration`)}
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          inputMode="decimal"
+                          placeholder="წთ"
+                          className="w-16 bg-transparent text-center text-sm font-black text-ink outline-none"
+                          aria-label={`ნაბიჯის ${index + 1} ხანგრძლივობა წუთებში`}
+                        />
+                      </label>
+                      <span className="text-[11px] leading-snug text-muted">
+                        არჩევითი — დატოვე ცარიელი, თუ ტაიმერი არ გჭირდება.
+                      </span>
+                    </div>
+                    {durationError ? (
+                      <span className="text-xs font-extrabold text-danger" aria-live="polite">
+                        {durationError}
                       </span>
                     ) : null}
                   </div>
@@ -453,6 +500,19 @@ export function RecipeForm({
           {state.fieldErrors?.imageUrl ? (
             <span className="mt-2 block text-xs font-extrabold text-danger" aria-live="polite">
               {state.fieldErrors.imageUrl}
+            </span>
+          ) : null}
+        </div>
+
+        <div>
+          <VideoUploader
+            pathPrefix={`${userId}/recipes`}
+            value={recipe?.videoPath ?? recipe?.videoUrl ?? null}
+            onChange={(next) => setValue("videoUrl", next ?? "", { shouldDirty: true, shouldValidate: true })}
+          />
+          {state.fieldErrors?.videoUrl ? (
+            <span className="mt-2 block text-xs font-extrabold text-danger" aria-live="polite">
+              {state.fieldErrors.videoUrl}
             </span>
           ) : null}
         </div>

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { PageTransition } from "@/components/page-transition";
 import { mersad } from "./fonts";
 import "./globals.css";
 
@@ -22,9 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ka" className={mersad.variable} data-scroll-behavior="smooth">
-      <body>
-        <PageTransition>{children}</PageTransition>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

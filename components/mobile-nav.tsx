@@ -129,45 +129,29 @@ export function MobileDrawer({
                 <X className="h-5 w-5" />
               </motion.button>
             </div>
-            <motion.nav
-              className="grid gap-1"
-              aria-label="მობილური ნავიგაცია"
-              initial="hidden"
-              animate="visible"
-              variants={{
-                hidden: {},
-                visible: { transition: { staggerChildren: 0.05, delayChildren: 0.1 } },
-              }}
-            >
+            <nav className="grid gap-1" aria-label="მობილური ნავიგაცია">
               {drawerLinks.map((link) => {
                 const isActive =
                   link.href === "/"
                     ? pathname === "/"
                     : pathname === link.href || pathname.startsWith(`${link.href}/`);
                 return (
-                  <motion.div
+                  <Link
                     key={link.href}
-                    variants={{
-                      hidden: { opacity: 0, x: 16 },
-                      visible: { opacity: 1, x: 0 },
-                    }}
-                    transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                    href={link.href}
+                    onClick={onClose}
+                    className={cn(
+                      "block rounded-[15px] px-4 py-3 text-[15px] font-black no-underline transition-all duration-300 ease-out",
+                      isActive
+                        ? "bg-soft-clay text-clay-dark"
+                        : "text-ink hover:translate-x-1 hover:bg-paper active:scale-[0.98]",
+                    )}
                   >
-                    <Link
-                      href={link.href}
-                      className={cn(
-                        "block rounded-[15px] px-4 py-3 text-[15px] font-black no-underline transition-all duration-300 ease-out",
-                        isActive
-                          ? "bg-soft-clay text-clay-dark"
-                          : "text-ink hover:translate-x-1 hover:bg-paper active:scale-[0.98]",
-                      )}
-                    >
-                      {link.label}
-                    </Link>
-                  </motion.div>
+                    {link.label}
+                  </Link>
                 );
               })}
-            </motion.nav>
+            </nav>
             <div className="mt-auto grid gap-2 pt-6">
               {isAuthenticated ? (
                 <Link

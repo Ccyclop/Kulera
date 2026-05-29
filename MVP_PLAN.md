@@ -209,3 +209,170 @@ A new user on a clean device should be able to, end-to-end, with no console erro
 | 5     | 4–6 days | Hardening for the actual launch. |
 
 Total: ~3–5 weeks of focused work to reach the production-grade MVP bar.
+
+---
+
+# Session Handoff — Recipe Detail UX Overhaul
+
+ეს სექცია არის ღია handoff იმისთვის, რომ მეორე AI agent-მა გააგრძელოს ან გადახედოს ცვლილებებს, რომელიც ბოლო session-ში გაკეთდა.
+
+## მოთხოვნა (user)
+
+რეცეპტის შიდა გვერდზე უნდა გაკეთდეს სამი მთავარი ცვლილება:
+
+1. **ვიდეო რეცეპტი** — მთავარ ფოტოზე "ვიდეო რეცეპტი" ღილაკი მხოლოდ მაშინ უნდა ჩანდეს, როცა მომხმარებელი ვიდეოს ატვირთავს. სხვა შემთხვევაში ღილაკი საერთოდ არ უნდა იყოს.
+2. **პორციების კონტროლი** — `-` / `+` ღილაკები პორციის რაოდენობას ცვლის და ინგრედიენტებიც შესაბამისად სკალირდება რეალურ დროში.
+3. **"დაწყება" ღილაკი → cooking mode** — ცალკე გვერდი, სადაც რეცეპტის ნაბიჯები გადმოცემულია "თამაშის სტილში" (one-step-per-view, ტაიმერი, ingredients checklist, confetti).
+
+დიზაინი უნდა მოერგოს მთლიანი საიტის სტილს (clay/cream, soft-card, ჯორჯიული `font-mersad`, rounded-[28px] ბარათები).
+
+## მომხმარებლის გადაწყვეტილებები (გადამოწმებული AskUserQuestion-ით)
+
+| თემა | არჩევანი |
+|------|----------|
+| ვიდეო ატვირთვა | ფაილი (Supabase Storage) + YouTube/Vimeo ლინკი |
+| ვიდეო ჩვენება | Modal (lightbox) |
+| ინგრედიენტების ფორმატი | სტრუქტურირებული `{quantity, unit, note}` + ძველი ფორმატის backward-compat |
+| ნაბიჯის ტაიმერი | ოფშენალი duration ველი — გამოჩნდება მხოლოდ თუ შევსებულია |
+| Cooking mode UI | სრულეკრანი per step + ტაიმერი + ინგრედიენტების checklist + confetti |
+| Cooking mode URL | `/recipes/[slug]/cook` |
+
+## რა გაკეთდა ამ session-ში
+
+### Schema / Storage
+
+- `supabase/storage.sql` — დაემატა `recipe-videos` bucket (100MB lim, `video/mp4`, `video/webm`, `video/quicktime`) + RLS policies. **DEPLOY: საჭიროა ხელით გაშვება Supabase-ში — `psql -f supabase/storage.sql` ან dashboard SQL editor-ში.**
+- `supabase/schema.sql` — `video_url` სვეტი უკვე იყო (ცვლილება არ მოითხოვა).
+
+### Types & data layer
+
+- `lib/types.ts` — ახალი ველები:
+  - `Ingredient`: `quantity: number | null`, `unit: string`, `note: string`, `amount: string` (legacy/derived).
+  - `RecipeStep`: `durationSeconds: number | null`.
+  - `Recipe`: `videoUrl`, `videoPath`, `baseServings`.
+- `lib/ingredients.ts` *(new)* — `parseAmountText`, `formatQuantity`, `formatAmount`, `scaleIngredient`, `parseServingsCount`. ცნობს უნიკოდის წილადებს (½, ⅓...) და mixed numbers (1 1/2).
+- `lib/video.ts` *(new)* — `resolveVideoSource` ცნობს YouTube/Vimeo/mp4/webm.
+- `lib/storage.ts` — `RECIPE_VIDEO_BUCKET`, `getRecipeVideoUrl`.
+- `lib/data.ts`:
+  - `recipeSelect`-ში `video_url` დაემატა.
+  - `normalizeIngredients` ახლა აშენებს structured ingredient-ს და backward-compat ფეშის ძველ "200 გ" ფორმატს.
+  - `normalizeSteps` კითხულობს `durationSeconds`.
+  - `mapRecipe` ავსებს ახალ ველებს (`videoUrl/videoPath/baseServings`).
+
+### Validation & actions
+
+- `lib/validation.ts`:
+  - `RecipeInput`-ში დაემატა `videoUrl`.
+  - `RecipeFormValues.ingredients` დარჩა როგორც `{name, amount}` (UX-ისთვის ერთი ველი), მაგრამ save-ის დროს `parseAmountText` ცვლის structured-ად.
+  - `RecipeFormValues.steps`-ში დაემატა `duration: string` (წუთებში).
+  - `parseFieldArraySteps` კონვერტირებს წუთებს → seconds (`durationSeconds`).
+  - publish/draft schemas მიიღებენ structured ingredient/step payload-ს.
+- `lib/actions/recipes.ts` — `recipePayload`-ში დაემატა `video_url`.
+
+### UI components (ახალი)
+
+- `components/video-uploader.tsx` — toggle "ფაილი / YouTube-Vimeo", validation, preview chip, წაშლა.
+- `components/video-lightbox.tsx` — ღილაკი + `FocusDialog` modal-ი video player-ით (file ან embed iframe).
+- `components/ingredients-panel.tsx` — interactive sidebar: `-/+` პორცია, ცოცხალი ingredient სკალირება, checklist (strikethrough).
+- `components/cook-mode.tsx` *(დიდი)* — სრულეკრანი cooking mode:
+  - progress bar header-ში
+  - per-step view animation-ით
+  - **`StepTimer`** child component (key-ით remount-დება per step → state სუფთა)
+  - ingredient checklist sidebar (პორციის +/- მუშაობს აქაც)
+  - სტეპების navigation list
+  - keyboard ნავიგაცია (←/→)
+  - დასასრულზე confetti burst + "გავაკეთე" → შეფასების ბმული
+- `app/globals.css`-ში: `kulera-confetti-fall` + `kulera-step-in` keyframes გლობალურად.
+
+### UI components (განახლებული)
+
+- `components/recipe-form.tsx`:
+  - VideoUploader-ი ImageUploader-ის გვერდით.
+  - ნაბიჯში ოფშენალი "ტაიმერი (წთ)" input.
+  - `videoUrl` hidden field და `steps.{n}.duration` form-data submission.
+- `app/recipes/[slug]/page.tsx`:
+  - "ვიდეო რეცეპტი" ღილაკი მხოლოდ `recipe.videoUrl ? <VideoLightboxTrigger /> : null`.
+  - "დაწყება" ღილაკი → `<ButtonLink href="/recipes/[slug]/cook">`.
+  - hardcoded ingredient/portion sidebar შეცვალა `<IngredientsPanel />`-მა.
+
+### ახალი route
+
+- `app/recipes/[slug]/cook/page.tsx` — server route, fetch-ავს რეცეპტს და გადასცემს `<CookMode recipe={recipe} />`.
+
+## ფაილების სრული სია (modified/added)
+
+```
+M  app/globals.css
+M  app/recipes/[slug]/page.tsx
+A  app/recipes/[slug]/cook/page.tsx
+A  components/cook-mode.tsx
+A  components/ingredients-panel.tsx
+A  components/video-lightbox.tsx
+A  components/video-uploader.tsx
+M  components/recipe-form.tsx
+M  lib/actions/recipes.ts
+M  lib/data.ts
+A  lib/ingredients.ts
+M  lib/storage.ts
+M  lib/types.ts
+M  lib/validation.ts
+A  lib/video.ts
+M  supabase/storage.sql
+```
+
+## QA Status
+
+- ✅ `npx tsc --noEmit` — სუფთა.
+- ✅ `npm run lint` — სუფთა.
+- ✅ `npm run build` — წარმატებული. `/recipes/[slug]/cook` route დარეგისტრირდა.
+- ❌ Browser-ში არ შემოწმდა — locally dev server-ის გაშვება არ მომხდარა.
+
+## რა საჭიროა შემდეგ AI agent-ის მიერ
+
+### 1. Supabase setup (BLOCKER for video upload)
+
+```bash
+# შეასრულე Supabase project-ში (SQL editor ან psql):
+# - გადატარდეს supabase/storage.sql (recipe-videos bucket + policies)
+# - დარწმუნდი რომ schema.sql-ში video_url column უკვე ნამდვილად არსებობს
+```
+
+თუ Supabase project-ში არ არსებობს `recipe-videos` bucket, video upload ვერ მუშავდება და მომხმარებელი დაინახავს "ფაილი ვერ აიტვირთა" შეცდომას.
+
+### 2. Manual QA (HIGH PRIORITY)
+
+ლოკალურად:
+```bash
+npm run dev
+```
+
+შემოწმდეს:
+- `/recipes/[slug]` — ვიდეო ღილაკი არ ჩანს თუ ვიდეო არ არის
+- რეცეპტი ვიდეოთი (YouTube ლინკი + ფაილი) — ღილაკზე დაჭერა modal-ში გახსნა
+- `/recipes/[slug]` — `-/+` პორციის ცვლა, ingredient-ის რიცხვები სკალირდება
+- რეცეპტი არანუმერული amounts-ით ("მცირე მუჭა") — სკალირება არ უნდა ცადოს, უცვლელად დარჩეს
+- "დაწყება" → `/cook` გვერდი იხსნება
+- Cooking mode: step navigation (←/→ keyboard), timer (თუ ნაბიჯს აქვს duration), ingredient checklist, confetti finish screen
+- რეცეპტის ფორმა (`/recipes/add`): video uploader-ში file ატვირთვა და link ცვლა, step row-ში "ტაიმერი (წთ)" შენახვა
+
+### 3. შემდეგი ნაბიჯები / improvements
+
+- **Mobile cook mode** — keyboard navigation არ მუშავდება mobile-ზე; დაამატე swipe gesture (touch handlers).
+- **Wake lock** — cooking mode-ში `navigator.wakeLock.request('screen')` რომ ეკრანი არ ჩაქრეს.
+- **TTS step reader** — დამატებითი gamification: ნაბიჯის ხმოვანი წაკითხვა.
+- **გვერდის გაზიარების ფუნქცია** — დეტალის გვერდზე "გაზიარება" ღილაკი ჯერ უაღრესად placeholder-ია (`href="#"`). გადასაკეთებელია `navigator.share` API-ით ან copy-link toast-ით.
+- **Ingredient unit normalization** — ერთეულების ერთგვაროვნება (გ vs გრამი vs g) — ეხება დროებას, ჯერ scope-გარეშეა.
+- **Video thumbnail** — ვიდეო ღილაკზე YouTube thumbnail-ის ჩვენება (`source.thumbnailSrc` უკვე resolve-დება YouTube-ისთვის).
+
+## დიზაინის გადაწყვეტილებები / Why
+
+- **ერთი amount input, structured შენახვა** — UX მარტივი დარჩა (მომხმარებელი ერთ ველში წერს "200 გ"), მაგრამ save-ის დროს structured-ად ვინახავთ. ეს უზრუნველყოფს ცოცხალ სკალირებას ყოველგვარი ფორმის ცვლილების გარეშე.
+- **StepTimer key-ით remount** — React 19-ის `react-hooks/set-state-in-effect` rule ეწინააღმდეგება useEffect-ში state reset-ს, ამიტომ TimerComponent extract-ი + `key={stepIndex}` უფრო სუფთა გადაწყვეტაა.
+- **Confetti deterministic seed** — Math.random impure-ად ითვლება React 19-ში, ამიტომ `pseudoRandom(seed)` ფუნქცია (sin-based) module-level-ზე გენერირდება.
+- **`baseServings` derive** — `parseServingsCount("4 ცალი")` → 4. სკალირების coefficient = `currentServings / baseServings`.
+
+## ცნობები
+
+- All UI strings ქართულად.
+- პროექტი იყენებს Next.js 16 (Turbopack), React 19, Tailwind 3, Supabase SSR.
+- Build size არსად არ გაიზარდა მკვეთრად, lighthouse არ შემოწმდა.

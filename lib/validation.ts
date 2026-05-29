@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { formatAmount, parseAmountText } from "./ingredients";
 import type { Difficulty, Ingredient, RecipeStep } from "./types";
 
 export const difficulties = ["მარტივი", "საშუალო", "რთული"] as const;
@@ -15,7 +16,8 @@ export type RecipeFormField =
   | "servings"
   | "ingredients"
   | "steps"
-  | "imageUrl";
+  | "imageUrl"
+  | "videoUrl";
 
 export type RecipeFieldErrors = Partial<Record<RecipeFormField, string>>;
 
@@ -27,12 +29,19 @@ export type RecipeInput = {
   difficulty: Difficulty;
   servings: string;
   imageUrl: string | null;
+  videoUrl: string | null;
   ingredients: Ingredient[];
   steps: RecipeStep[];
 };
 
+export type RecipeIngredientRow = {
+  name: string;
+  amount: string;
+};
+
 export type RecipeStepRow = {
   body: string;
+  duration: string;
 };
 
 export type RecipeFormValues = {
@@ -43,7 +52,8 @@ export type RecipeFormValues = {
   difficulty: Difficulty;
   servings: string;
   imageUrl: string;
-  ingredients: Ingredient[];
+  videoUrl: string;
+  ingredients: RecipeIngredientRow[];
   steps: RecipeStepRow[];
 };
 
@@ -114,6 +124,7 @@ const recipeIngredientFormSchema = z.object({
 
 const recipeStepFormSchema = z.object({
   body: z.string().trim().max(1000, "ნაბიჯი ძალიან გრძელია"),
+  duration: z.string().trim().max(6, "დრო წუთებში"),
 });
 
 const recipeFormBaseSchema = z.object({
@@ -124,6 +135,7 @@ const recipeFormBaseSchema = z.object({
   difficulty: z.enum(difficulties, { error: "აირჩიე სირთულე" }),
   servings: z.string().trim().max(80, "პორციები ძალიან გრძელია"),
   imageUrl: z.string().trim().max(1000, "ფოტოს მისამართი ძალიან გრძელია"),
+  videoUrl: z.string().trim().max(1000, "ვიდეოს მისამართი ძალიან გრძელია"),
   ingredients: z.array(recipeIngredientFormSchema).min(1, "დაამატე მინიმუმ ერთი ინგრედიენტი"),
   steps: z.array(recipeStepFormSchema),
 });
@@ -221,6 +233,20 @@ export const recipePublishFormSchema = recipeFormBaseSchema
     validateStepRows(input, ctx, true);
   });
 
+const ingredientPayloadSchema = z.object({
+  name: z.string(),
+  quantity: z.number().nullable(),
+  unit: z.string(),
+  note: z.string(),
+  amount: z.string(),
+});
+
+const stepPayloadSchema = z.object({
+  title: z.string(),
+  body: z.string(),
+  durationSeconds: z.number().int().positive().nullable(),
+});
+
 const publishSchema = z.object({
   title: z.string().trim().min(3, "სათაური მინიმუმ 3 სიმბოლო უნდა იყოს").max(120, "სათაური ძალიან გრძელია"),
   description: z.string().trim().min(10, "აღწერა მინიმუმ 10 სიმბოლო უნდა იყოს").max(1200, "აღწერა ძალიან გრძელია"),
@@ -233,8 +259,9 @@ const publishSchema = z.object({
   difficulty: z.enum(difficulties, { error: "აირჩიე სირთულე" }),
   servings: z.string().trim().min(1, "მიუთითე პორციები").max(80, "პორციები ძალიან გრძელია"),
   imageUrl: z.string().trim().max(1000, "ფოტოს მისამართი ძალიან გრძელია").nullable(),
-  ingredients: z.array(z.object({ name: z.string(), amount: z.string() })).min(1, "დაამატე მინიმუმ ერთი ინგრედიენტი"),
-  steps: z.array(z.object({ title: z.string(), body: z.string() })).min(1, "დაამატე მინიმუმ ერთი ნაბიჯი"),
+  videoUrl: z.string().trim().max(1000, "ვიდეოს მისამართი ძალიან გრძელია").nullable(),
+  ingredients: z.array(ingredientPayloadSchema).min(1, "დაამატე მინიმუმ ერთი ინგრედიენტი"),
+  steps: z.array(stepPayloadSchema).min(1, "დაამატე მინიმუმ ერთი ნაბიჯი"),
 });
 
 const draftSchema = publishSchema.extend({
@@ -247,8 +274,8 @@ const draftSchema = publishSchema.extend({
     .min(1, "დრო უნდა იყოს მინიმუმ 1 წუთი")
     .max(1440, "დრო ძალიან დიდია"),
   servings: z.string().trim().max(80, "პორციები ძალიან გრძელია"),
-  ingredients: z.array(z.object({ name: z.string(), amount: z.string() })),
-  steps: z.array(z.object({ title: z.string(), body: z.string() })),
+  ingredients: z.array(ingredientPayloadSchema),
+  steps: z.array(stepPayloadSchema),
 });
 
 function stringValue(formData: FormData, key: string) {
@@ -265,8 +292,23 @@ function formDataStrings(formData: FormData, key: string) {
   return formData.getAll(key).map((value) => (typeof value === "string" ? value.trim() : ""));
 }
 
+function buildStructuredIngredient(name: string, amount: string): Ingredient {
+  const trimmedName = name.trim();
+  const trimmedAmount = amount.trim();
+  const parsed = parseAmountText(trimmedAmount);
+  const ingredient: Ingredient = {
+    name: trimmedName,
+    quantity: parsed.quantity,
+    unit: parsed.unit,
+    note: parsed.note,
+    amount: "",
+  };
+  ingredient.amount = formatAmount(ingredient) || trimmedAmount;
+  return ingredient;
+}
+
 function parseFieldArrayIngredients(formData: FormData): Ingredient[] {
-  const rows = new Map<number, Partial<Ingredient>>();
+  const rows = new Map<number, { name?: string; amount?: string }>();
 
   formData.forEach((value, key) => {
     if (typeof value !== "string") return;
@@ -275,18 +317,15 @@ function parseFieldArrayIngredients(formData: FormData): Ingredient[] {
     if (!match?.[1] || !match[2]) return;
 
     const index = Number(match[1]);
-    const field = match[2] as keyof Ingredient;
     const row = rows.get(index) ?? {};
-    row[field] = value.trim();
+    if (match[2] === "name") row.name = value;
+    if (match[2] === "amount") row.amount = value;
     rows.set(index, row);
   });
 
   return [...rows.entries()]
     .sort(([left], [right]) => left - right)
-    .map(([, ingredient]) => ({
-      name: ingredient.name ?? "",
-      amount: ingredient.amount ?? "",
-    }))
+    .map(([, row]) => buildStructuredIngredient(row.name ?? "", row.amount ?? ""))
     .filter((ingredient) => ingredient.name.length > 0);
 }
 
@@ -298,32 +337,47 @@ function parseIngredients(formData: FormData): Ingredient[] {
   const amounts = formDataStrings(formData, "ingredientAmount");
 
   return names
-    .map((name, index) => ({
-      name,
-      amount: amounts[index] ?? "",
-    }))
+    .map((name, index) => buildStructuredIngredient(name, amounts[index] ?? ""))
     .filter((ingredient) => ingredient.name.length > 0);
 }
 
+function parseStepDuration(value: string | undefined): number | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const numeric = Number(trimmed.replace(",", "."));
+  if (!Number.isFinite(numeric) || numeric <= 0) return null;
+  const seconds = Math.round(numeric * 60);
+  return seconds > 0 ? seconds : null;
+}
+
 function parseFieldArraySteps(formData: FormData): RecipeStep[] {
-  const rows = new Map<number, string>();
+  const rows = new Map<number, { body?: string; duration?: string }>();
 
   formData.forEach((value, key) => {
     if (typeof value !== "string") return;
 
-    const match = key.match(/^steps\.(\d+)\.body$/);
-    if (!match?.[1]) return;
+    const match = key.match(/^steps\.(\d+)\.(body|duration)$/);
+    if (!match?.[1] || !match[2]) return;
 
-    rows.set(Number(match[1]), value.trim());
+    const index = Number(match[1]);
+    const row = rows.get(index) ?? {};
+    if (match[2] === "body") row.body = value;
+    if (match[2] === "duration") row.duration = value;
+    rows.set(index, row);
   });
 
   return [...rows.entries()]
     .sort(([left], [right]) => left - right)
-    .map(([, body]) => body)
-    .filter((body) => body.length > 0)
-    .map((body, index) => ({
+    .map(([, row]) => ({
+      body: (row.body ?? "").trim(),
+      durationSeconds: parseStepDuration(row.duration),
+    }))
+    .filter((entry) => entry.body.length > 0)
+    .map((entry, index) => ({
       title: `ნაბიჯი ${index + 1}`,
-      body,
+      body: entry.body,
+      durationSeconds: entry.durationSeconds,
     }));
 }
 
@@ -358,6 +412,7 @@ export function parseRecipeFormData(formData: FormData, mode: RecipeValidationMo
     difficulty: (stringValue(formData, "difficulty") || "მარტივი") as Difficulty,
     servings: stringValue(formData, "servings"),
     imageUrl: nullableStringValue(formData, "imageUrl"),
+    videoUrl: nullableStringValue(formData, "videoUrl"),
     ingredients: parseIngredients(formData),
     steps: parseFieldArraySteps(formData),
   };

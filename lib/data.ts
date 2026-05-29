@@ -1,13 +1,14 @@
 import { cache } from "react";
 import type { Category, Comment, Cook, Ingredient, Recipe, RecipeStep, RecipeTip } from "./types";
 import type { CookingTimeFilter, RecipeFilters, RecipeSort } from "./content-options";
+import { formatAmount, parseAmountText, parseServingsCount } from "./ingredients";
 import { cookScore } from "./ranking";
-import { getAvatarUrl, getRecipeImageUrl } from "./storage";
+import { getAvatarUrl, getRecipeImageUrl, getRecipeVideoUrl } from "./storage";
 import { hasSupabaseConfig } from "./supabase/env";
 import { createClient } from "./supabase/server";
 
 const recipeSelect =
-  "id,user_id,category_id,title,slug,description,image_url,cooking_time,difficulty,servings,ingredients,steps,status,created_at,category:categories(id,name,slug,description),creator:profiles(id,full_name,username,bio,avatar_url)";
+  "id,user_id,category_id,title,slug,description,image_url,video_url,cooking_time,difficulty,servings,ingredients,steps,status,created_at,category:categories(id,name,slug,description),creator:profiles(id,full_name,username,bio,avatar_url)";
 
 const categoryPalette = [
   { tone: "#F2D7C9", dot: "#B6542D" },
@@ -43,6 +44,7 @@ type RecipeRow = {
   slug: string;
   description: string;
   image_url: string | null;
+  video_url: string | null;
   cooking_time: number;
   difficulty: Recipe["difficulty"];
   servings: string;
@@ -169,21 +171,67 @@ function normalizeNotificationPrefs(value: unknown): NotificationPrefs {
   };
 }
 
+function buildIngredient(name: string, raw: {
+  quantity?: unknown;
+  unit?: unknown;
+  note?: unknown;
+  amount?: unknown;
+}): Ingredient | null {
+  if (!name) return null;
+
+  const explicitQuantity =
+    typeof raw.quantity === "number" && Number.isFinite(raw.quantity)
+      ? raw.quantity
+      : typeof raw.quantity === "string"
+        ? Number(raw.quantity.replace(",", "."))
+        : null;
+
+  const explicitUnit = typeof raw.unit === "string" ? raw.unit.trim() : "";
+  const explicitNote = typeof raw.note === "string" ? raw.note.trim() : "";
+  const amountText = typeof raw.amount === "string" ? raw.amount.trim() : "";
+
+  if (explicitQuantity != null && Number.isFinite(explicitQuantity)) {
+    const ingredient: Ingredient = {
+      name,
+      quantity: explicitQuantity,
+      unit: explicitUnit,
+      note: explicitNote,
+      amount: "",
+    };
+    ingredient.amount = formatAmount(ingredient);
+    return ingredient;
+  }
+
+  const parsed = amountText ? parseAmountText(amountText) : { quantity: null, unit: "", note: "" };
+  const ingredient: Ingredient = {
+    name,
+    quantity: parsed.quantity,
+    unit: explicitUnit || parsed.unit,
+    note: explicitNote || parsed.note,
+    amount: amountText,
+  };
+  ingredient.amount = formatAmount(ingredient) || amountText;
+  return ingredient;
+}
+
 function normalizeIngredients(value: unknown): Ingredient[] {
   if (!Array.isArray(value)) return [];
 
   return value
     .map((item) => {
       if (typeof item === "string") {
-        return { amount: "", name: item };
+        return buildIngredient(item, {});
       }
 
       if (!isRecord(item)) return null;
 
       const name = firstText(item.name, item.title, item.ingredient);
-      const amount = firstText(item.amount, item.quantity, item.measure);
-
-      return name ? { amount, name } : null;
+      return buildIngredient(name, {
+        quantity: item.quantity,
+        unit: item.unit ?? item.measure,
+        note: item.note,
+        amount: typeof item.amount === "string" ? item.amount : undefined,
+      });
     })
     .filter((item): item is Ingredient => item !== null);
 }
@@ -194,7 +242,7 @@ function normalizeSteps(value: unknown): RecipeStep[] {
   return value
     .map((item, index) => {
       if (typeof item === "string") {
-        return { body: item, title: `ნაბიჯი ${index + 1}` };
+        return { body: item, title: `ნაბიჯი ${index + 1}`, durationSeconds: null };
       }
 
       if (!isRecord(item)) return null;
@@ -202,7 +250,23 @@ function normalizeSteps(value: unknown): RecipeStep[] {
       const body = firstText(item.body, item.description, item.text, item.instruction);
       const title = firstText(item.title, item.name) || `ნაბიჯი ${index + 1}`;
 
-      return body ? { body, title } : null;
+      const durationRaw =
+        typeof item.durationSeconds === "number"
+          ? item.durationSeconds
+          : typeof item.duration_seconds === "number"
+            ? item.duration_seconds
+            : typeof item.durationSeconds === "string"
+              ? Number(item.durationSeconds)
+              : typeof item.duration_seconds === "string"
+                ? Number(item.duration_seconds)
+                : null;
+
+      const durationSeconds =
+        typeof durationRaw === "number" && Number.isFinite(durationRaw) && durationRaw > 0
+          ? Math.round(durationRaw)
+          : null;
+
+      return body ? { body, title, durationSeconds } : null;
     })
     .filter((item): item is RecipeStep => item !== null);
 }
@@ -240,9 +304,22 @@ function mapCategory(row: CategoryRow, recipeCount = 0, index = 0): Category {
   };
 }
 
+function resolveVideoFields(value: string | null | undefined): { videoUrl: string | null; videoPath: string | null } {
+  if (!value) return { videoUrl: null, videoPath: null };
+  const trimmed = value.trim();
+  if (!trimmed) return { videoUrl: null, videoPath: null };
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return { videoUrl: trimmed, videoPath: null };
+  }
+
+  return { videoUrl: getRecipeVideoUrl(trimmed), videoPath: trimmed };
+}
+
 function mapRecipe(row: RecipeRow, stats?: RecipeStatsRow): Recipe {
   const creatorName = row.creator?.full_name ?? "Kulera";
   const categoryName = row.category?.name ?? "კატეგორია";
+  const { videoUrl, videoPath } = resolveVideoFields(row.video_url);
 
   return {
     id: row.id,
@@ -254,6 +331,9 @@ function mapRecipe(row: RecipeRow, stats?: RecipeStatsRow): Recipe {
     categoryName,
     imageUrl: getRecipeImageUrl(row.image_url),
     imagePath: row.image_url ?? null,
+    videoUrl,
+    videoPath,
+    baseServings: parseServingsCount(row.servings),
     cookingTime: row.cooking_time,
     difficulty: row.difficulty,
     servings: row.servings,
