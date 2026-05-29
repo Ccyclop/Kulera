@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Share2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { BookmarkToggle } from "@/components/bookmark-toggle";
 import { CommentThread } from "@/components/comment-thread";
 import { IngredientsPanel } from "@/components/ingredients-panel";
@@ -9,6 +9,7 @@ import { HeroTitle, Reveal, Stagger } from "@/components/motion";
 import { PageShell } from "@/components/page-shell";
 import { RatingWidget } from "@/components/rating-widget";
 import { RecipeCard } from "@/components/recipe-card";
+import { ShareButton } from "@/components/share-button";
 import { VideoLightboxTrigger } from "@/components/video-lightbox";
 import { Badge, ButtonLink, RatingStars } from "@/components/ui";
 import { getAuthClaims } from "@/lib/auth";
@@ -89,10 +90,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ s
                   initialSaved={initialSaved}
                   isAuthenticated={Boolean(userId)}
                 />
-                <ButtonLink href="#" variant="secondary">
-                  <Share2 className="h-4 w-4" />
-                  გაზიარება
-                </ButtonLink>
+                <ShareButton title={recipe.title} description={recipe.description} slug={recipe.slug} />
                 <ButtonLink href={`/recipes/${recipe.slug}/edit`} variant="secondary">
                   რედაქტირება
                 </ButtonLink>

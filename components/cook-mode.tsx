@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ChefHat,
@@ -214,6 +214,8 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
     [recipe.steps],
   );
 
+  const swipeStartX = useRef<number | null>(null);
+
   const markCurrentDone = useCallback(() => {
     setCompleted((prev) => {
       const next = new Set(prev);
@@ -255,6 +257,31 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [finished, goNext, goPrev, isLast, finish]);
+
+  useEffect(() => {
+    if (finished || typeof navigator === "undefined") return;
+    const nav = navigator as Navigator & { wakeLock?: { request: (type: "screen") => Promise<WakeLockSentinel> } };
+    if (!nav.wakeLock) return;
+
+    let sentinel: WakeLockSentinel | null = null;
+    let cancelled = false;
+
+    nav.wakeLock
+      .request("screen")
+      .then((lock) => {
+        if (cancelled) {
+          lock.release().catch(() => undefined);
+        } else {
+          sentinel = lock;
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+      sentinel?.release().catch(() => undefined);
+    };
+  }, [finished]);
 
   const toggleIngredient = (index: number) => {
     setCheckedIngredients((prev) => {
@@ -394,6 +421,23 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
           key={stepIndex}
           className="soft-card relative flex min-h-[520px] flex-col overflow-hidden rounded-[32px] p-6 md:p-10"
           style={{ animation: "kulera-step-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both" }}
+          onTouchStart={(event) => {
+            swipeStartX.current = event.touches[0]?.clientX ?? null;
+          }}
+          onTouchEnd={(event) => {
+            const start = swipeStartX.current;
+            swipeStartX.current = null;
+            if (start == null) return;
+            const end = event.changedTouches[0]?.clientX ?? start;
+            const delta = end - start;
+            if (Math.abs(delta) < 60) return;
+            if (delta < 0) {
+              if (isLast) finish();
+              else goNext();
+            } else {
+              goPrev();
+            }
+          }}
         >
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-2 rounded-full bg-soft-clay px-3 py-1 text-[12px] font-black text-clay-dark">
