@@ -534,7 +534,7 @@ export function RecipeForm({
           </Button>
         )}
         <Button type="button" variant="secondary" disabled={isPending} onClick={() => submitIntent(saveIntent)}>
-          {isPending && activeIntent === saveIntent ? "ინახება..." : isEdit ? "ცვლილების შენახვა" : "შენახვა"}
+          {isPending && activeIntent === saveIntent ? "ინახება..." : isEdit ? "ცვლილების შენახვა" : "მონახაზად შენახვა"}
         </Button>
         <Button type="button" disabled={isPending} onClick={() => submitIntent("publish")}>
           {isPending && activeIntent === "publish" ? "ქვეყნდება..." : isEdit && isPublished ? "განახლება" : "რეცეპტის გამოქვეყნება"}
