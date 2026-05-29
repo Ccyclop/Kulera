@@ -615,6 +615,26 @@ export async function getRecipesByCook(username: string, filters: RecipeFilters 
   ).map((entry) => entry.recipe);
 }
 
+export async function getOwnedRecipes(userId: string): Promise<Recipe[]> {
+  const supabase = await getClientOrNull();
+  if (!supabase) return [];
+
+  const [{ data, error }, statsById] = await Promise.all([
+    supabase
+      .from("recipes")
+      .select(recipeSelect)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false }),
+    getRecipeStatsById(supabase),
+  ]);
+
+  logSupabaseError("owned-recipes", error);
+
+  if (error || !data) return [];
+
+  return mapRecipeEntries(data as unknown as RecipeQueryRow[], statsById).map((entry) => entry.recipe);
+}
+
 export async function searchRecipes(query: string, filters: RecipeFilters = {}) {
   const normalizedQuery = query.trim().toLocaleLowerCase("ka-GE");
 

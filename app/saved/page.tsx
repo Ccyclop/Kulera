@@ -55,19 +55,19 @@ export default async function SavedRecipesPage({
   return (
     <PageShell>
       <main className="page-main">
-        <Reveal as="section" className="hero-panel min-h-[260px]">
+        <Reveal as="section" className="hero-panel min-h-[200px] md:min-h-[260px]">
           <p className="eyebrow">შენახული</p>
-          <h1 className="text-[clamp(42px,5vw,74px)] font-black leading-none tracking-normal">
+          <h1 className="text-[clamp(34px,5vw,74px)] font-black leading-none tracking-normal">
             <HeroTitle text="შენახული რეცეპტები" />
           </h1>
-          <p className="mt-4 max-w-2xl text-base font-medium leading-relaxed text-muted">
+          <p className="mt-3 max-w-2xl text-sm font-medium leading-relaxed text-muted md:mt-4 md:text-base">
             რეცეპტები, რომლებსაც მოგვიანებით დაუბრუნდები.
           </p>
           <span className="hero-watermark">Saved</span>
         </Reveal>
 
-        <div className="soft-card mt-6 grid gap-4 rounded-[26px] p-4">
-          <div>
+        <div className="soft-card mt-6 flex flex-col gap-4 overflow-hidden rounded-[24px] p-3 md:rounded-[26px] md:p-4">
+          <div className="min-w-0">
             <span className="mb-2 block text-xs font-black text-muted">მომზადების დრო</span>
             <FilterChips
               items={timeFilterOptions}
@@ -75,7 +75,7 @@ export default async function SavedRecipesPage({
               getHref={(value) => pathWithSearchParams("/saved", params, { time: value, cursor: null })}
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <span className="mb-2 block text-xs font-black text-muted">სირთულე</span>
             <FilterChips
               items={difficultyFilterOptions}
@@ -83,14 +83,14 @@ export default async function SavedRecipesPage({
               getHref={(value) => pathWithSearchParams("/saved", params, { difficulty: value, cursor: null })}
             />
           </div>
-          <div className="max-w-xs">
+          <div className="w-full max-w-xs">
             <QuerySelect label="დალაგება" name="sort" value={sort} options={sortOptions} />
           </div>
         </div>
 
         {page.items.length > 0 ? (
           <>
-            <Stagger as="section" className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3" stagger={0.06}>
+            <Stagger as="section" className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" stagger={0.06}>
               {page.items.map((entry) => (
                 <RecipeCard key={entry.id} recipe={entry.recipe} />
               ))}
