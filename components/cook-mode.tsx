@@ -562,26 +562,26 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
           </div>
         </section>
 
-        <aside className="hidden h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] gap-3 overflow-hidden xl:grid">
-          <div className="soft-card relative h-24 overflow-hidden rounded-[20px]">
+        <aside className="hidden h-full min-h-0 grid-rows-[minmax(0,1fr)_auto_auto] gap-3 overflow-hidden xl:grid">
+          <div className="soft-card relative min-h-0 overflow-hidden rounded-[24px]">
             <Image
               src={recipe.imageUrl}
               alt={recipe.title}
               fill
-              sizes="320px"
+              sizes="(max-width: 1280px) 100vw, 420px"
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-ink/65 via-ink/30 to-transparent" />
-            <div className="absolute inset-y-0 left-0 flex flex-col justify-center px-4 text-white">
-              <p className="text-[10px] font-black uppercase tracking-wider opacity-80">{recipe.categoryName}</p>
-              <h2 className="text-base font-black leading-tight">{recipe.title}</h2>
-              <p className="mt-1 text-[11px] font-black opacity-80 tabular-nums">
-                {totalSteps} ნაბიჯი • {totalDuration > 0 ? `${Math.round(totalDuration / 60)} წთ` : `${recipe.cookingTime} წთ`}
+            <div className="absolute inset-0 bg-gradient-to-t from-ink/75 via-ink/25 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+              <p className="text-[11px] font-black uppercase tracking-wider opacity-80">{recipe.categoryName}</p>
+              <h2 className="mt-1 text-[20px] font-black leading-tight">{recipe.title}</h2>
+              <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-black backdrop-blur tabular-nums">
+                {totalSteps} ნაბიჯი • {totalDuration > 0 ? `${Math.round(totalDuration / 60)} წთ` : `${recipe.cookingTime} წთ`} • {recipe.difficulty}
               </p>
             </div>
           </div>
 
-          <div className="soft-card flex max-h-[55vh] flex-col overflow-hidden rounded-[22px]">
+          <div className="soft-card flex max-h-[42vh] flex-col overflow-hidden rounded-[22px]">
             <div className="flex shrink-0 items-center justify-between gap-2 border-b border-oat px-4 py-3">
               <h3 className="text-[15px] font-black leading-tight">ინგრედიენტები</h3>
               <div className="inline-flex items-center gap-1 rounded-full border border-oat bg-[#FAF6F0] px-1.5 py-0.5 text-[11px] font-black">
@@ -637,7 +637,7 @@ export function CookMode({ recipe }: { recipe: Recipe }) {
             </ul>
           </div>
 
-          <div className="soft-card flex min-h-0 flex-col overflow-hidden rounded-[22px] p-3">
+          <div className="soft-card flex max-h-[32vh] flex-col overflow-hidden rounded-[22px] p-3">
             <h3 className="shrink-0 px-1 text-[13px] font-black leading-tight text-muted">ნაბიჯები</h3>
             <ol className="mt-2 grid min-h-0 flex-1 gap-0.5 overflow-y-auto">
               {recipe.steps.map((step, index) => {
