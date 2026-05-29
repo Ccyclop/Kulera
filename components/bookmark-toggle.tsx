@@ -38,7 +38,6 @@ export function BookmarkToggle({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [burstKey, setBurstKey] = useState(0);
-  const [toastKey, setToastKey] = useState(0);
   const statusId = useId();
 
   function handleClick() {
@@ -56,7 +55,6 @@ export function BookmarkToggle({
     if (next) {
       setBurstKey((value) => value + 1);
     }
-    setToastKey((value) => value + 1);
 
     startTransition(async () => {
       const result = await toggleSavedRecipe(recipeId);
@@ -72,8 +70,6 @@ export function BookmarkToggle({
       }
     });
   }
-
-  const toastLabel = error ? error : saved ? "+1 შენახული" : "ამოღებულია";
 
   return (
     <div className={cn("relative inline-flex", className)}>
@@ -151,24 +147,6 @@ export function BookmarkToggle({
           <Bookmark className={cn("h-4 w-4 transition-colors", saved && "fill-current")} aria-hidden />
         </motion.span>
       </motion.button>
-
-      <AnimatePresence>
-        {toastKey > 0 ? (
-          <motion.span
-            key={`toast-${toastKey}`}
-            initial={{ opacity: 0, y: 6, scale: 0.9 }}
-            animate={{ opacity: 1, y: -28, scale: 1 }}
-            exit={{ opacity: 0, y: -42, scale: 0.92 }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            className={cn(
-              "pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] font-black shadow-soft",
-              error ? "bg-danger text-white" : saved ? "bg-clay text-white" : "bg-ink text-white",
-            )}
-          >
-            {toastLabel}
-          </motion.span>
-        ) : null}
-      </AnimatePresence>
 
       <span id={statusId} className="sr-only" role={error ? "alert" : "status"} aria-live="polite">
         {error ?? (saved ? "რეცეპტი შენახულია." : "რეცეპტი შენახული არ არის.")}
