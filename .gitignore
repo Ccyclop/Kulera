@@ -10,3 +10,7 @@ yarn-error.log*
 *.tsbuildinfo
 .DS_Store
 .codex/
+.claude/settings.local.json
+
+# Seed data (recipe JSON + generated images) — used only by `npm run seed`, never at runtime
+data/seed-recipes/

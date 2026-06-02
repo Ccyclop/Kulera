@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { parseRecipeFormData, type RecipeFieldErrors, type RecipeInput, type RecipeValidationMode } from "@/lib/validation";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
+import { slugifyTitle } from "@/lib/slug";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 type RecipeIntent = "save-draft" | "publish" | "update" | "delete";
@@ -20,42 +21,6 @@ type OwnedRecipeRow = {
   slug: string;
   status: "draft" | "published" | "archived";
   user_id: string;
-};
-
-const georgianToLatin: Record<string, string> = {
-  ა: "a",
-  ბ: "b",
-  გ: "g",
-  დ: "d",
-  ე: "e",
-  ვ: "v",
-  ზ: "z",
-  თ: "t",
-  ი: "i",
-  კ: "k",
-  ლ: "l",
-  მ: "m",
-  ნ: "n",
-  ო: "o",
-  პ: "p",
-  ჟ: "zh",
-  რ: "r",
-  ს: "s",
-  ტ: "t",
-  უ: "u",
-  ფ: "p",
-  ქ: "q",
-  ღ: "gh",
-  ყ: "q",
-  შ: "sh",
-  ჩ: "ch",
-  ც: "ts",
-  ძ: "dz",
-  წ: "ts",
-  ჭ: "ch",
-  ხ: "kh",
-  ჯ: "j",
-  ჰ: "h",
 };
 
 function formString(formData: FormData, key: string) {
@@ -78,20 +43,6 @@ function recipePayload(input: RecipeInput, userId: string, status: "draft" | "pu
     steps: input.steps,
     status,
   };
-}
-
-function slugifyTitle(title: string) {
-  const transliterated = [...title.toLocaleLowerCase("ka-GE")]
-    .map((character) => georgianToLatin[character] ?? character)
-    .join("");
-
-  return transliterated
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .replace(/-{2,}/g, "-")
-    .slice(0, 80);
 }
 
 async function getAuthenticatedContext(redirectTo = "/recipes/add") {
