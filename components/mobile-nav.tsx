@@ -38,7 +38,7 @@ export function MobileMenuButton({ onOpen, open }: { onOpen: () => void; open: b
       onClick={onOpen}
       aria-label={t("მენიუს გახსნა")}
       aria-expanded={open}
-      className="grid h-[42px] w-[42px] place-items-center rounded-[15px] border border-oat bg-surface text-ink md:hidden"
+      className="grid h-[42px] w-[42px] place-items-center rounded-[15px] border border-oat bg-surface text-ink lg:hidden"
       whileHover={{ y: -2, borderColor: "var(--clay)" }}
       whileTap={{ scale: 0.9 }}
       transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
@@ -100,7 +100,7 @@ export function MobileDrawer({
     <AnimatePresence>
       {open ? (
         <motion.div
-          className="fixed inset-0 z-[100] md:hidden"
+          className="fixed inset-0 z-[100] lg:hidden"
           role="dialog"
           aria-modal="true"
           aria-label={t("ნავიგაცია")}
@@ -137,8 +137,8 @@ export function MobileDrawer({
                 <X className="h-5 w-5" />
               </motion.button>
             </div>
-            <div className="mb-4">
-              <LanguageSwitcher className="w-full justify-center" />
+            <div className="mb-5">
+              <LanguageSwitcher variant="panel" />
             </div>
             <nav className="grid gap-1" aria-label={t("მობილური ნავიგაცია")}>
               {drawerLinks.map((link) => {
@@ -152,7 +152,7 @@ export function MobileDrawer({
                     href={link.href}
                     onClick={onClose}
                     className={cn(
-                      "block rounded-[15px] px-4 py-3 text-[15px] font-black no-underline transition-all duration-300 ease-out",
+                      "block min-h-[48px] truncate rounded-[15px] px-4 py-3 text-[15px] font-black no-underline transition-all duration-300 ease-out",
                       isActive
                         ? "bg-soft-clay text-clay-dark"
                         : "text-ink hover:translate-x-1 hover:bg-paper active:scale-[0.98]",
@@ -197,7 +197,7 @@ export function MobileBottomNav() {
   return (
     <motion.nav
       aria-label={t("მობილური ნავიგაცია")}
-      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 gap-1 border-t border-oat bg-surface/95 px-2 pb-[max(env(safe-area-inset-bottom),8px)] pt-2 backdrop-blur-xl md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 gap-1 border-t border-oat bg-surface/95 px-2 pb-[max(env(safe-area-inset-bottom),8px)] pt-2 backdrop-blur-xl lg:hidden"
       initial={{ y: 24, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
@@ -235,7 +235,9 @@ export function MobileBottomNav() {
                 <Icon className="h-4 w-4" />
               </motion.span>
             </span>
-            <span className="leading-tight">{t(tab.label)}</span>
+            <span className="grid min-h-[22px] max-w-full place-items-start text-center text-[9px] leading-[1.08]">
+              <span className="max-w-full truncate">{t(tab.label)}</span>
+            </span>
           </Link>
         );
       })}
