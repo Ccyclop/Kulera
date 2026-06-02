@@ -55,6 +55,8 @@ export interface Recipe {
   saveCount: number;
   creatorUsername: string;
   creatorName: string;
+  creatorAvatarUrl: string;
+  creatorAvatarInitial: string;
   createdAt: string;
   status: RecipeStatus;
   tags: string[];

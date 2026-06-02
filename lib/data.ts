@@ -349,6 +349,8 @@ function mapRecipe(row: RecipeRow, stats?: RecipeStatsRow): Recipe {
     saveCount: stats?.save_count ?? 0,
     creatorUsername: row.creator?.username ?? "",
     creatorName,
+    creatorAvatarUrl: getAvatarUrl(row.creator?.avatar_url),
+    creatorAvatarInitial: avatarInitial(creatorName),
     createdAt: row.created_at,
     status: row.status,
     tags: [categoryName].filter(Boolean),

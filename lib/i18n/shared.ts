@@ -236,6 +236,7 @@ const en: Record<string, string> = {
   "შეფასება_plural": "ratings",
   "დაწყება": "Start",
   "რედაქტირება": "Edit",
+  "ავტორი": "Author",
   "მომზადების ნაბიჯები": "Cooking steps",
   "ნაბიჯები მოკლეა, მაგრამ საკმარისად კონკრეტული, რომ რეცეპტი რეალურად გამოიყენო სამზარეულოში.": "Steps are short but specific enough to use the recipe in the kitchen.",
   "Tips / notes": "Tips / notes",
