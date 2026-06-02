@@ -61,6 +61,35 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ s
               </h1>
               <p className="mt-6 max-w-2xl text-[17px] font-medium leading-relaxed text-muted">{recipe.description}</p>
               <Badge className="mt-5">{t("{category} სამზარეულო", { category: translateCategoryName(locale, recipe.categoryName) })}</Badge>
+
+              <div className="mt-6 flex items-center gap-3">
+                {recipe.creatorAvatarUrl ? (
+                  <Image
+                    src={recipe.creatorAvatarUrl}
+                    alt={recipe.creatorName}
+                    width={44}
+                    height={44}
+                    className="h-11 w-11 rounded-2xl object-cover"
+                  />
+                ) : (
+                  <span className="grid h-11 w-11 place-items-center rounded-2xl bg-sage-light text-base font-black text-sage">
+                    {recipe.creatorAvatarInitial}
+                  </span>
+                )}
+                <div className="leading-tight">
+                  <span className="block text-[11px] font-extrabold text-muted">{t("ავტორი")}</span>
+                  {recipe.creatorUsername ? (
+                    <Link
+                      href={`/cooks/${recipe.creatorUsername}`}
+                      className="text-[15px] font-black text-ink no-underline transition-colors hover:text-clay"
+                    >
+                      {recipe.creatorName}
+                    </Link>
+                  ) : (
+                    <span className="text-[15px] font-black text-ink">{recipe.creatorName}</span>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div>
@@ -91,9 +120,11 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ s
                   isAuthenticated={Boolean(userId)}
                 />
                 <ShareButton title={recipe.title} description={recipe.description} slug={recipe.slug} />
-                <ButtonLink href={`/recipes/${recipe.slug}/edit`} variant="secondary">
-                  რედაქტირება
-                </ButtonLink>
+                {userId === recipe.userId ? (
+                  <ButtonLink href={`/recipes/${recipe.slug}/edit`} variant="secondary">
+                    რედაქტირება
+                  </ButtonLink>
+                ) : null}
               </div>
             </div>
           </div>
