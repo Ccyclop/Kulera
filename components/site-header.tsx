@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Heart, LogIn, Plus, UserRound } from "lucide-react";
+import { Heart, LogIn, Plus, Search, UserRound } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { MobileNavToggle } from "@/components/mobile-nav";
@@ -25,7 +25,7 @@ export function SiteHeader({ isAuthenticated = false }: { isAuthenticated?: bool
 
   return (
     <motion.header
-      className="sticky top-0 z-30 grid min-h-[78px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 border-b border-oat/90 bg-surface/90 px-[clamp(18px,5vw,76px)] py-4 backdrop-blur-xl md:grid-cols-1 xl:grid-cols-[minmax(210px,auto)_minmax(360px,560px)_auto] xl:gap-7 xl:py-0"
+      className="sticky top-0 z-30 flex min-h-[78px] items-center justify-between gap-4 border-b border-oat/90 bg-surface/90 px-[clamp(18px,5vw,76px)] py-4 backdrop-blur-xl lg:grid lg:grid-cols-[minmax(160px,auto)_minmax(0,560px)_1fr] lg:py-0"
       initial={{ y: -24, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
@@ -42,7 +42,7 @@ export function SiteHeader({ isAuthenticated = false }: { isAuthenticated?: bool
       </Link>
 
       <nav
-        className="hidden justify-self-start overflow-x-auto rounded-full border border-oat bg-paper/80 p-1 md:flex xl:justify-self-center"
+        className="hidden justify-self-center overflow-x-auto rounded-full border border-oat bg-paper/80 p-1 lg:flex"
         aria-label={t("Primary")}
       >
         {navItems.map((item) => {
@@ -56,7 +56,7 @@ export function SiteHeader({ isAuthenticated = false }: { isAuthenticated?: bool
               key={item.href}
               href={item.href}
               className={cn(
-                "group/nav relative grid min-h-[34px] shrink-0 place-items-center rounded-full px-4 text-[13px] font-extrabold no-underline transition-colors duration-200",
+                "group/nav relative grid min-h-[34px] shrink-0 place-items-center rounded-full px-3 text-[13px] font-extrabold no-underline transition-colors duration-200",
                 isActive ? "text-clay" : "text-muted hover:text-ink",
               )}
             >
@@ -79,10 +79,19 @@ export function SiteHeader({ isAuthenticated = false }: { isAuthenticated?: bool
         })}
       </nav>
 
-      <div className="hidden flex-wrap items-center justify-end gap-2 md:flex xl:flex-nowrap">
-        <div className="inline-flex min-h-[42px] min-w-0 flex-1 xl:flex-none xl:w-[min(280px,22vw)]">
+      <div className="hidden items-center justify-end gap-2 lg:flex lg:justify-self-end">
+        <div className="hidden min-h-[42px] min-w-0 2xl:inline-flex 2xl:w-[min(280px,22vw)]">
           <NavbarSearch />
         </div>
+        <motion.span whileHover={{ y: -2 }} whileTap={{ scale: 0.9 }} transition={{ type: "spring", stiffness: 380, damping: 22 }} className="2xl:hidden">
+          <Link
+            href="/search"
+            aria-label={t("ძიება")}
+            className="grid h-[42px] w-[42px] place-items-center rounded-[15px] border border-oat bg-surface text-ink no-underline transition-colors duration-200 hover:border-clay hover:bg-soft-clay/50 hover:text-clay"
+          >
+            <Search className="h-4 w-4" />
+          </Link>
+        </motion.span>
         <LanguageSwitcher />
         <motion.span whileHover={{ y: -2 }} whileTap={{ scale: 0.9 }} transition={{ type: "spring", stiffness: 380, damping: 22 }}>
           <Link
@@ -98,8 +107,8 @@ export function SiteHeader({ isAuthenticated = false }: { isAuthenticated?: bool
             href="/recipes/add"
             className="group/add inline-flex min-h-[42px] items-center justify-center gap-2 rounded-[15px] border border-oat bg-surface px-4 text-[13px] font-black text-ink no-underline transition-colors duration-200 hover:border-clay hover:bg-soft-clay/40"
           >
-            <Plus className="hidden h-4 w-4 transition-transform duration-300 group-hover/add:rotate-90 sm:block" />
-            {t("დამატება")}
+            <Plus className="h-4 w-4 transition-transform duration-300 group-hover/add:rotate-90" />
+            <span className="hidden xl:inline">{t("დამატება")}</span>
           </Link>
         </motion.span>
         {isAuthenticated ? (
@@ -110,7 +119,7 @@ export function SiteHeader({ isAuthenticated = false }: { isAuthenticated?: bool
               aria-label={t("პროფილი")}
             >
               <UserRound className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("პროფილი")}</span>
+              <span className="hidden xl:inline">{t("პროფილი")}</span>
             </Link>
           </motion.span>
         ) : (
@@ -124,13 +133,13 @@ export function SiteHeader({ isAuthenticated = false }: { isAuthenticated?: bool
                 className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 transition-all duration-700 ease-out group-hover/login:left-[120%] group-hover/login:opacity-100 motion-reduce:hidden"
               />
               <LogIn className="relative h-4 w-4 transition-transform duration-300 group-hover/login:translate-x-0.5" />
-              <span className="relative hidden sm:inline">{t("შესვლა")}</span>
+              <span className="relative hidden xl:inline">{t("შესვლა")}</span>
             </Link>
           </motion.span>
         )}
       </div>
 
-      <div className="flex items-center gap-2 justify-self-end md:hidden">
+      <div className="flex items-center gap-2 lg:hidden">
         <MobileSearchToggle />
         <MobileNavToggle isAuthenticated={isAuthenticated} />
       </div>

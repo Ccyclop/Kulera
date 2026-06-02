@@ -13,6 +13,7 @@ const en: Record<string, string> = {
   "ქართული რეცეპტების პლატფორმა ყოველდღიური სამზარეულოსთვის.": "A Georgian recipe platform for everyday cooking.",
   "ენის არჩევა": "Choose language",
   "ენის შეცვლა": "Change language",
+  "ენა": "Language",
   "ქართული": "Georgian",
   "ინგლისური": "English",
   "მენიუს გახსნა": "Open menu",
