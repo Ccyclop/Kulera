@@ -12,5 +12,7 @@ yarn-error.log*
 .codex/
 .claude/settings.local.json
 
-# Seed data (recipe JSON + generated images) — used only by `npm run seed`, never at runtime
-data/seed-recipes/
+# Local-only: seed data (npm run seed) + video/ad pipelines — never used at runtime
+data/
+marketing-video/
+remotion-ad/

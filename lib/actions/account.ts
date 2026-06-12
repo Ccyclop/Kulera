@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ZodError } from "zod";
+import { AVATAR_BUCKET } from "@/lib/storage";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -83,18 +84,20 @@ function revalidateAccountPaths(username?: string | null) {
 }
 
 async function getProfileUsername(supabase: SupabaseServerClient, userId: string) {
-  const { data, error } = await supabase.from("profiles").select("username").eq("id", userId).maybeSingle();
+  const { data, error } = await supabase.from("profiles").select("username, avatar_url").eq("id", userId).maybeSingle();
 
   if (error) {
     return {
       error: "პროფილის მოძებნა ვერ მოხერხდა.",
       username: null,
+      avatarPath: null,
     };
   }
 
   return {
     error: null,
     username: typeof data?.username === "string" ? data.username : null,
+    avatarPath: typeof data?.avatar_url === "string" ? data.avatar_url : null,
   };
 }
 
@@ -226,6 +229,17 @@ export async function updateProfile(_previousState: AccountActionState, formData
 
   if (error) {
     return { formError: error.message };
+  }
+
+  // The avatar uses a unique filename per upload, so a changed (or removed) avatar leaves the
+  // old object behind. Delete it now that the new path is committed, and only if it is ours.
+  const previousAvatar = currentProfile.avatarPath;
+  if (previousAvatar && previousAvatar !== input.avatarPath && previousAvatar.startsWith(`${context.userId}/`)) {
+    const { error: avatarCleanupError } = await context.supabase.storage.from(AVATAR_BUCKET).remove([previousAvatar]);
+
+    if (avatarCleanupError) {
+      console.error(`[supabase:avatar-cleanup] ${avatarCleanupError.message}`);
+    }
   }
 
   const { error: metadataError } = await context.supabase.auth.updateUser({

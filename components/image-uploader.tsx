@@ -59,7 +59,6 @@ export function ImageUploader({
   name,
   aspect = "video",
   maxBytes = DEFAULT_MAX_BYTES,
-  fileName,
   label = "ფოტოს ატვირთვა",
   helper = "JPG, PNG ან WebP — მაქს. 5MB.",
 }: {
@@ -70,7 +69,6 @@ export function ImageUploader({
   name?: string;
   aspect?: "video" | "square";
   maxBytes?: number;
-  fileName?: string;
   label?: string;
   helper?: string;
 }) {
@@ -86,6 +84,7 @@ export function ImageUploader({
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const objectUrlRef = useRef<string | null>(null);
+  const initialValueRef = useRef<string | null>(value ?? null);
   const { t } = useI18n();
 
   useEffect(() => {
@@ -135,8 +134,7 @@ export function ImageUploader({
 
       const supabase = createClient();
       const cleanedPrefix = pathPrefix.replace(/^\/+|\/+$/g, "");
-      const objectName = fileName ?? `${randomId()}.webp`;
-      const objectPath = `${cleanedPrefix}/${objectName}`;
+      const objectPath = `${cleanedPrefix}/${randomId()}.webp`;
 
       const { error: uploadError } = await supabase.storage
         .from(bucket)
@@ -148,8 +146,16 @@ export function ImageUploader({
         return;
       }
 
+      const previousPath = path;
       update(objectPath);
       swapPreview(bucketResolver(bucket)(objectPath));
+
+      // Each upload gets a unique filename, so a replaced photo would otherwise be orphaned.
+      // Drop the file we uploaded earlier in this session — but never the saved value, which
+      // the server only removes once the form is actually submitted.
+      if (previousPath && previousPath !== objectPath && previousPath !== initialValueRef.current) {
+        void supabase.storage.from(bucket).remove([previousPath]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "ატვირთვა ვერ მოხერხდა.");
     } finally {

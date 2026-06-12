@@ -144,7 +144,6 @@ export function ProfileSettingsForm({ profile, userId }: { profile: AccountProfi
               pathPrefix={userId}
               value={profile?.avatarPath ?? null}
               aspect="square"
-              fileName="avatar.webp"
               label="ავატარი"
               helper="მაქს. 5MB"
               onChange={(path) => setValue("avatarPath", path ?? "", { shouldDirty: true, shouldValidate: true })}

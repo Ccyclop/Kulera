@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { HeroTitle, Reveal, Stagger } from "@/components/motion";
 import { QuerySelect } from "@/components/query-select";
@@ -65,8 +66,12 @@ export default async function CookProfilePage({
       <main className="page-main">
         <Reveal as="section" className="hero-panel min-h-[260px] md:min-h-[300px]">
           <div className="grid gap-5 md:gap-6 lg:grid-cols-[96px_1fr_auto] lg:items-center">
-            <div className="grid h-20 w-20 place-items-center rounded-[24px] bg-sage-light text-2xl font-black text-sage md:h-24 md:w-24 md:rounded-[30px] md:text-3xl">
-              {cook.avatarInitial}
+            <div className="relative grid h-20 w-20 place-items-center overflow-hidden rounded-[24px] bg-sage-light text-2xl font-black text-sage md:h-24 md:w-24 md:rounded-[30px] md:text-3xl">
+              {cook.avatarUrl ? (
+                <Image src={cook.avatarUrl} alt={cook.fullName} fill sizes="96px" className="object-cover" />
+              ) : (
+                cook.avatarInitial
+              )}
             </div>
             <div className="min-w-0">
               <p className="eyebrow">{t("კულინარი")}</p>
