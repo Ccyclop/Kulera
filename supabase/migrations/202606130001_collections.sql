@@ -32,6 +32,17 @@ create index if not exists collections_user_id_idx on public.collections (user_i
 create index if not exists collections_share_token_idx on public.collections (share_token);
 create index if not exists collections_visibility_idx on public.collections (visibility);
 
+-- Ensure the shared updated_at helper exists (older DBs may predate it).
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
 drop trigger if exists collections_set_updated_at on public.collections;
 create trigger collections_set_updated_at
 before update on public.collections
