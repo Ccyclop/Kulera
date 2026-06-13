@@ -297,7 +297,7 @@ export function MobileBottomNav() {
                     className={cn(
                       "grid place-items-center rounded-full transition-colors duration-200",
                       !isActive && isAdd
-                        ? "h-9 w-9 bg-clay text-white shadow-[0_2px_10px_rgba(182,84,45,0.45)]"
+                        ? "h-10 w-10 bg-clay text-white shadow-[0_2px_10px_rgba(182,84,45,0.45)]"
                         : "",
                       isActive ? "text-white" : !isAdd ? "text-muted" : "",
                     )}
@@ -314,10 +314,10 @@ export function MobileBottomNav() {
                         animate={isActive && !reduce ? { rotate: [0, 90, 0] } : { rotate: 0 }}
                         transition={{ duration: 0.4, ease: NAV_EASE }}
                       >
-                        <Icon className="h-5 w-5" strokeWidth={2.5} />
+                        <Icon className="h-6 w-6" strokeWidth={2.5} />
                       </motion.span>
                     ) : (
-                      <Icon className="h-[18px] w-[18px]" strokeWidth={2.25} />
+                      <Icon className="h-[22px] w-[22px]" strokeWidth={2.25} />
                     )}
                   </motion.span>
 
