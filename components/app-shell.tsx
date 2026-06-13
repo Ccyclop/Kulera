@@ -31,7 +31,7 @@ export function AppShell({
   return (
     <>
       <SiteHeader isAuthenticated={isAuthenticated} />
-      <div className="pb-[calc(72px+env(safe-area-inset-bottom))] md:pb-0">
+      <div className="pb-[calc(92px+env(safe-area-inset-bottom))] md:pb-0">
         {children}
         <SiteFooter />
       </div>

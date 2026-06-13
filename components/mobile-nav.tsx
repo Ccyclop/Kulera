@@ -214,7 +214,7 @@ export function MobileBottomNav() {
   return (
     <motion.nav
       aria-label={t("მობილური ნავიგაცია")}
-      className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),6px)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),24px)] lg:hidden"
       initial={reduce ? { opacity: 0 } : { y: 20, opacity: 0 }}
       animate={reduce ? { opacity: 1 } : { y: 0, opacity: 1 }}
       transition={{ duration: 0.45, ease: NAV_EASE, delay: 0.1 }}
