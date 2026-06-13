@@ -492,6 +492,11 @@ const en: Record<string, string> = {
   "ეს username უკვე დაკავებულია.": "This username is already taken.",
   "პაროლის შესაცვლელად თავიდან შედი ანგარიშში და სცადე ხელახლა.": "To change the password, log in again and try once more.",
   "უცხოური": "International",
+  "ქუქი-ფაილების თანხმობა": "Cookie consent",
+  "ვიყენებთ ქუქი-ფაილებს ანალიტიკისთვის, რომ გავიგოთ როგორ გამოიყენება საიტი და გავაუმჯობესოთ.":
+    "We use cookies for analytics to understand how the site is used and improve it.",
+  "თანხმობა": "Accept",
+  "უარი": "Decline",
 };
 
 const categoryCopy: Record<string, { name: string; description: string }> = {
