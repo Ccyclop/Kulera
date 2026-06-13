@@ -353,7 +353,7 @@ returns table (
   cr_id uuid,
   recipe_id uuid,
   section text,
-  position integer
+  "position" integer
 )
 language sql
 stable
