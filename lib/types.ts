@@ -1,5 +1,7 @@
 export type Difficulty = "მარტივი" | "საშუალო" | "რთული";
 export type RecipeStatus = "draft" | "published" | "archived";
+export type RecipeVisibility = "public" | "unlisted";
+export type CollectionVisibility = "public" | "unlisted" | "private";
 
 export interface Category {
   id: string;
@@ -59,6 +61,7 @@ export interface Recipe {
   creatorAvatarInitial: string;
   createdAt: string;
   status: RecipeStatus;
+  visibility: RecipeVisibility;
   tags: string[];
 }
 
@@ -84,4 +87,43 @@ export interface Comment {
   avatarInitial: string;
   body: string;
   createdAt: string;
+}
+
+export interface Collection {
+  id: string;
+  userId: string;
+  slug: string;
+  title: string;
+  description: string;
+  coverImageUrl: string | null;
+  coverImagePath: string | null;
+  visibility: CollectionVisibility;
+  shareToken: string;
+  recipeCount: number;
+  createdAt: string;
+  updatedAt: string;
+  creatorUsername: string;
+  creatorName: string;
+  creatorAvatarUrl: string;
+  creatorAvatarInitial: string;
+}
+
+// One recipe inside a collection, carrying its membership row id + ordering.
+export interface CollectionMember {
+  membershipId: string;
+  section: string | null;
+  position: number;
+  recipe: Recipe;
+}
+
+// Recipes grouped for display: a flat list yields one section with label === null.
+export interface CollectionSection {
+  label: string | null;
+  recipes: Recipe[];
+}
+
+export interface CollectionDetail {
+  collection: Collection;
+  members: CollectionMember[];
+  sections: CollectionSection[];
 }

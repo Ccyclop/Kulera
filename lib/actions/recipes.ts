@@ -41,6 +41,7 @@ function recipePayload(input: RecipeInput, userId: string, status: "draft" | "pu
     servings: input.servings,
     ingredients: input.ingredients,
     steps: input.steps,
+    visibility: input.visibility,
     status,
   };
 }

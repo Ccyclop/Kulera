@@ -42,7 +42,7 @@ export default async function AddRecipePage() {
 
         <section className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_340px]">
           <RecipeForm categories={categories} userId={auth.userId} />
-          <aside className="grid content-start gap-4 xl:sticky xl:top-28">
+          <aside className="order-first grid content-start gap-4 xl:order-none xl:sticky xl:top-28">
             <SidebarCard title="დაწერე ნაბიჯები მარტივად">
               {t("გრძელი აბზაცები დაყავი მოქმედებებად. ერთი ნაბიჯი, ერთი მოქმედება.")}
             </SidebarCard>

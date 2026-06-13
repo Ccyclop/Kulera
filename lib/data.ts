@@ -1,9 +1,21 @@
 import { cache } from "react";
-import type { Category, Comment, Cook, Ingredient, Recipe, RecipeStep, RecipeTip } from "./types";
+import type {
+  Category,
+  Collection,
+  CollectionDetail,
+  CollectionMember,
+  CollectionSection,
+  Comment,
+  Cook,
+  Ingredient,
+  Recipe,
+  RecipeStep,
+  RecipeTip,
+} from "./types";
 import type { CookingTimeFilter, RecipeFilters, RecipeSort } from "./content-options";
 import { formatAmount, parseAmountText, parseServingsCount } from "./ingredients";
 import { cookScore } from "./ranking";
-import { getAvatarUrl, getRecipeImageUrl, getRecipeVideoUrl } from "./storage";
+import { getAvatarUrl, getCollectionCoverUrl, getRecipeImageUrl, getRecipeVideoUrl } from "./storage";
 import { hasSupabaseConfig } from "./supabase/env";
 import { createClient } from "./supabase/server";
 import { matchesCategoryQuery, matchesSearchQuery } from "./search";
@@ -11,7 +23,7 @@ import { matchRecipe, type RecipeMatch } from "./pantry/match";
 import type { PantryState } from "./pantry/url";
 
 const recipeSelect =
-  "id,user_id,category_id,title,slug,description,image_url,video_url,cooking_time,difficulty,servings,ingredients,steps,status,created_at,category:categories(id,name,slug,description),creator:profiles(id,full_name,username,bio,avatar_url)";
+  "id,user_id,category_id,title,slug,description,image_url,video_url,cooking_time,difficulty,servings,ingredients,steps,status,visibility,created_at,category:categories(id,name,slug,description),creator:profiles(id,full_name,username,bio,avatar_url)";
 
 const categoryPalette = [
   { tone: "#F2D7C9", dot: "#B6542D" },
@@ -54,6 +66,7 @@ type RecipeRow = {
   ingredients: unknown;
   steps: unknown;
   status: Recipe["status"];
+  visibility: Recipe["visibility"] | null;
   created_at: string;
   category: CategoryRow | null;
   creator: ProfileRow | null;
@@ -353,6 +366,7 @@ function mapRecipe(row: RecipeRow, stats?: RecipeStatsRow): Recipe {
     creatorAvatarInitial: avatarInitial(creatorName),
     createdAt: row.created_at,
     status: row.status,
+    visibility: row.visibility === "unlisted" ? "unlisted" : "public",
     tags: [categoryName].filter(Boolean),
   };
 }
@@ -434,7 +448,7 @@ export const getCategories = cache(async (): Promise<Category[]> => {
 
   const [{ data: categoryRows, error: categoryError }, { data: recipeRows, error: recipeError }] = await Promise.all([
     supabase.from("categories").select("id,name,slug,description").order("name", { ascending: true }),
-    supabase.from("recipes").select("category_id").eq("status", "published"),
+    supabase.from("recipes").select("category_id").eq("status", "published").eq("visibility", "public"),
   ]);
 
   logSupabaseError("categories", categoryError);
@@ -494,6 +508,7 @@ async function fetchPublishedRecipeEntries(): Promise<RecipeEntry[]> {
       .from("recipes")
       .select(recipeSelect)
       .eq("status", "published")
+      .eq("visibility", "public")
       .order("created_at", { ascending: false }),
     getRecipeStatsById(supabase),
   ]);
@@ -561,8 +576,23 @@ export async function getDailyPicks({ poolSize = 20, count = 5 } = {}) {
 }
 
 export async function getRecipeBySlug(slug: string) {
-  const recipes = await getRecipes();
-  return recipes.find((recipe) => recipe.slug === slug) ?? null;
+  // Direct lookup (not derived from the public pool) so published-but-unlisted
+  // recipes are reachable by their own slug for anyone with the link, while still
+  // being absent from every listing. RLS already gates this to published rows.
+  const supabase = await getClientOrNull();
+  if (!supabase) return null;
+
+  const [{ data, error }, statsById] = await Promise.all([
+    supabase.from("recipes").select(recipeSelect).eq("slug", slug).eq("status", "published").maybeSingle(),
+    getRecipeStatsById(supabase),
+  ]);
+
+  logSupabaseError("recipe-by-slug", error);
+
+  if (error || !data) return null;
+
+  const row = normalizeRecipeRow(data as unknown as RecipeQueryRow);
+  return mapRecipe(row, statsById.get(row.id));
 }
 
 export async function getEditableRecipeBySlug(slug: string, userId: string) {
@@ -915,4 +945,299 @@ export async function getAccountProfile(userId: string, claims?: Record<string, 
     savedRecipes: savedCount ?? 0,
     notificationPrefs: normalizeNotificationPrefs(profileRow?.notification_prefs),
   };
+}
+
+// ============================================================================
+// Collections
+// ============================================================================
+
+const collectionSelect =
+  "id,user_id,title,slug,description,cover_image_url,visibility,share_token,created_at,updated_at,creator:profiles(id,full_name,username,bio,avatar_url)";
+
+type CollectionRow = {
+  id: string;
+  user_id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  cover_image_url: string | null;
+  visibility: Collection["visibility"];
+  share_token: string;
+  created_at: string;
+  updated_at: string;
+  creator?: ProfileRow | ProfileRow[] | null;
+};
+
+type MembershipRow = {
+  id: string;
+  recipe_id: string;
+  section: string | null;
+  position: number;
+};
+
+type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
+
+function mapCollection(row: CollectionRow, recipeCount = 0, creatorOverride?: ProfileRow | null): Collection {
+  const creator = creatorOverride ?? oneOrNull(row.creator);
+  const creatorName = creator?.full_name ?? "Kulera";
+
+  return {
+    id: row.id,
+    userId: row.user_id,
+    slug: row.slug,
+    title: row.title,
+    description: row.description ?? "",
+    coverImageUrl: row.cover_image_url ? getCollectionCoverUrl(row.cover_image_url) : null,
+    coverImagePath: row.cover_image_url ?? null,
+    visibility: row.visibility,
+    shareToken: row.share_token,
+    recipeCount,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    creatorUsername: creator?.username ?? "",
+    creatorName,
+    creatorAvatarUrl: getAvatarUrl(creator?.avatar_url),
+    creatorAvatarInitial: avatarInitial(creatorName),
+  };
+}
+
+// Full recipe objects (category + creator + stats) for a set of ids. RLS allows
+// any published recipe to be read by id, so this also covers unlisted recipes
+// surfaced through a shared collection.
+async function getRecipesByIds(supabase: SupabaseClient, ids: string[]): Promise<Map<string, Recipe>> {
+  const map = new Map<string, Recipe>();
+  if (ids.length === 0) return map;
+
+  const [{ data, error }, statsById] = await Promise.all([
+    supabase.from("recipes").select(recipeSelect).in("id", ids).eq("status", "published"),
+    getRecipeStatsById(supabase),
+  ]);
+
+  logSupabaseError("collection-recipe-data", error);
+
+  if (error || !data) return map;
+
+  (data as unknown as RecipeQueryRow[]).forEach((queryRow) => {
+    const row = normalizeRecipeRow(queryRow);
+    map.set(row.id, mapRecipe(row, statsById.get(row.id)));
+  });
+
+  return map;
+}
+
+function buildMembers(rows: MembershipRow[], recipesById: Map<string, Recipe>): CollectionMember[] {
+  return rows
+    .map((row) => {
+      const recipe = recipesById.get(row.recipe_id);
+      if (!recipe) return null;
+      return {
+        membershipId: row.id,
+        section: row.section,
+        position: row.position,
+        recipe,
+      } satisfies CollectionMember;
+    })
+    .filter((member): member is CollectionMember => member !== null);
+}
+
+// Walk position order; start a new visual group whenever the section label
+// changes. A flat collection (all labels null) yields a single null-labelled group.
+function groupIntoSections(members: CollectionMember[]): CollectionSection[] {
+  const sections: CollectionSection[] = [];
+
+  for (const member of members) {
+    const label = member.section?.trim() ? member.section.trim() : null;
+    const last = sections[sections.length - 1];
+
+    if (last && last.label === label) {
+      last.recipes.push(member.recipe);
+    } else {
+      sections.push({ label, recipes: [member.recipe] });
+    }
+  }
+
+  return sections;
+}
+
+async function getCollectionCounts(supabase: SupabaseClient, collectionIds: string[]): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  if (collectionIds.length === 0) return counts;
+
+  const { data, error } = await supabase
+    .from("collection_recipes")
+    .select("collection_id")
+    .in("collection_id", collectionIds);
+
+  logSupabaseError("collection-counts", error);
+
+  if (error || !data) return counts;
+
+  (data as Array<{ collection_id: string }>).forEach((row) => {
+    counts.set(row.collection_id, (counts.get(row.collection_id) ?? 0) + 1);
+  });
+
+  return counts;
+}
+
+async function loadCollectionDetail(supabase: SupabaseClient, row: CollectionRow, creatorOverride?: ProfileRow | null) {
+  const { data: memberData, error: memberError } = await supabase
+    .from("collection_recipes")
+    .select("id,recipe_id,section,position")
+    .eq("collection_id", row.id)
+    .order("position", { ascending: true });
+
+  logSupabaseError("collection-members", memberError);
+
+  const memberRows = (memberData ?? []) as MembershipRow[];
+  const recipesById = await getRecipesByIds(supabase, memberRows.map((member) => member.recipe_id));
+  const members = buildMembers(memberRows, recipesById);
+
+  return {
+    collection: mapCollection(row, members.length, creatorOverride),
+    members,
+    sections: groupIntoSections(members),
+  } satisfies CollectionDetail;
+}
+
+export async function getOwnedCollections(userId: string): Promise<Collection[]> {
+  const supabase = await getClientOrNull();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("collections")
+    .select(collectionSelect)
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false });
+
+  logSupabaseError("owned-collections", error);
+
+  if (error || !data) return [];
+
+  const rows = data as unknown as CollectionRow[];
+  const counts = await getCollectionCounts(supabase, rows.map((row) => row.id));
+  return rows.map((row) => mapCollection(row, counts.get(row.id) ?? 0));
+}
+
+export async function getOwnedCollectionBySlug(slug: string, userId: string): Promise<CollectionDetail | null> {
+  const supabase = await getClientOrNull();
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from("collections")
+    .select(collectionSelect)
+    .eq("slug", slug)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  logSupabaseError("owned-collection", error);
+
+  if (error || !data) return null;
+
+  return loadCollectionDetail(supabase, data as unknown as CollectionRow);
+}
+
+export async function getSharedCollectionByToken(token: string): Promise<CollectionDetail | null> {
+  const supabase = await getClientOrNull();
+  if (!supabase || !token) return null;
+
+  const { data: collData, error: collError } = await supabase.rpc("get_shared_collection", { p_token: token });
+  logSupabaseError("shared-collection", collError);
+
+  const collRow = (Array.isArray(collData) ? collData[0] : null) as CollectionRow | null;
+  if (collError || !collRow) return null;
+
+  const [{ data: memberData, error: memberError }, { data: creatorData }] = await Promise.all([
+    supabase.rpc("get_shared_collection_recipes", { p_token: token }),
+    supabase.from("profiles").select("id,full_name,username,bio,avatar_url").eq("id", collRow.user_id).maybeSingle(),
+  ]);
+
+  logSupabaseError("shared-collection-recipes", memberError);
+
+  const memberRows = ((memberData ?? []) as Array<{ cr_id: string; recipe_id: string; section: string | null; position: number }>).map(
+    (member) => ({ id: member.cr_id, recipe_id: member.recipe_id, section: member.section, position: member.position }),
+  );
+
+  const recipesById = await getRecipesByIds(supabase, memberRows.map((member) => member.recipe_id));
+  const members = buildMembers(memberRows, recipesById);
+
+  return {
+    collection: mapCollection(collRow, members.length, (creatorData ?? null) as ProfileRow | null),
+    members,
+    sections: groupIntoSections(members),
+  };
+}
+
+export async function getPublicCollectionsByCook(username: string): Promise<Collection[]> {
+  const supabase = await getClientOrNull();
+  if (!supabase) return [];
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id,full_name,username,bio,avatar_url")
+    .eq("username", username)
+    .maybeSingle();
+
+  if (!profile) return [];
+
+  const { data, error } = await supabase
+    .from("collections")
+    .select(collectionSelect)
+    .eq("user_id", (profile as ProfileRow).id)
+    .eq("visibility", "public")
+    .order("updated_at", { ascending: false });
+
+  logSupabaseError("public-collections", error);
+
+  if (error || !data) return [];
+
+  const rows = data as unknown as CollectionRow[];
+  const counts = await getCollectionCounts(supabase, rows.map((row) => row.id));
+  return rows.map((row) => mapCollection(row, counts.get(row.id) ?? 0));
+}
+
+export async function getPublicCollectionBySlug(username: string, slug: string): Promise<CollectionDetail | null> {
+  const supabase = await getClientOrNull();
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from("collections")
+    .select(collectionSelect)
+    .eq("slug", slug)
+    .eq("visibility", "public")
+    .maybeSingle();
+
+  logSupabaseError("public-collection", error);
+
+  if (error || !data) return null;
+
+  const row = data as unknown as CollectionRow;
+  const creator = oneOrNull(row.creator);
+  if (creator && creator.username !== username) return null;
+
+  return loadCollectionDetail(supabase, row);
+}
+
+// The user's own collection ids that already contain a given recipe — powers the
+// checked state of the add-to-collection menu.
+export async function getCollectionMembershipsForRecipe(recipeId: string, userId: string): Promise<Set<string>> {
+  const memberships = new Set<string>();
+
+  const supabase = await getClientOrNull();
+  if (!supabase || !recipeId || !userId) return memberships;
+
+  const { data: collections } = await supabase.from("collections").select("id").eq("user_id", userId);
+  const collectionIds = ((collections ?? []) as Array<{ id: string }>).map((row) => row.id);
+  if (collectionIds.length === 0) return memberships;
+
+  const { data, error } = await supabase
+    .from("collection_recipes")
+    .select("collection_id")
+    .eq("recipe_id", recipeId)
+    .in("collection_id", collectionIds);
+
+  logSupabaseError("recipe-memberships", error);
+
+  ((data ?? []) as Array<{ collection_id: string }>).forEach((row) => memberships.add(row.collection_id));
+
+  return memberships;
 }

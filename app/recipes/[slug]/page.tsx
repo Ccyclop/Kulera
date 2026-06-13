@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { AddToCollection } from "@/components/add-to-collection";
 import { BookmarkToggle } from "@/components/bookmark-toggle";
 import { CommentThread } from "@/components/comment-thread";
 import { IngredientsPanel } from "@/components/ingredients-panel";
@@ -13,12 +14,15 @@ import { VideoLightboxTrigger } from "@/components/video-lightbox";
 import { Badge, ButtonLink, RatingStars } from "@/components/ui";
 import { getAuthClaims } from "@/lib/auth";
 import {
+  getCollectionMembershipsForRecipe,
+  getOwnedCollections,
   getRecipeBySlug,
   getRecipeComments,
   getSimilarRecipes,
   getUserRecipeRating,
   isRecipeSavedBy,
 } from "@/lib/data";
+import type { Collection } from "@/lib/types";
 import { getLocale, getServerTranslator } from "@/lib/i18n/server";
 import { formatMinutes, formatRatingCount, translateCategoryName } from "@/lib/i18n/shared";
 import { parseServingsCount } from "@/lib/ingredients";
@@ -36,11 +40,13 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ s
   const claims = await getAuthClaims();
   const userId = typeof claims?.sub === "string" ? claims.sub : null;
 
-  const [recipeComments, similar, userRating, initialSaved] = await Promise.all([
+  const [recipeComments, similar, userRating, initialSaved, ownedCollections, recipeMemberships] = await Promise.all([
     getRecipeComments(recipe),
     getSimilarRecipes(recipe, 3),
     userId ? getUserRecipeRating(recipe.id, userId) : Promise.resolve(null),
     userId ? isRecipeSavedBy(recipe.id, userId) : Promise.resolve(false),
+    userId ? getOwnedCollections(userId) : Promise.resolve([] as Collection[]),
+    userId ? getCollectionMembershipsForRecipe(recipe.id, userId) : Promise.resolve(new Set<string>()),
   ]);
 
   return (
@@ -120,6 +126,18 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ s
                   isAuthenticated={Boolean(userId)}
                 />
                 <ShareButton title={recipe.title} description={recipe.description} slug={recipe.slug} />
+                <AddToCollection
+                  recipeId={recipe.id}
+                  recipeSlug={recipe.slug}
+                  recipeVisibility={recipe.visibility}
+                  isAuthenticated={Boolean(userId)}
+                  collections={ownedCollections.map((collection) => ({
+                    id: collection.id,
+                    title: collection.title,
+                    visibility: collection.visibility,
+                  }))}
+                  initialMemberships={[...recipeMemberships]}
+                />
                 {userId === recipe.userId ? (
                   <ButtonLink href={`/recipes/${recipe.slug}/edit`} variant="secondary">
                     რედაქტირება
@@ -139,7 +157,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ s
         </Reveal>
 
         <Reveal as="section" className="mt-10 grid gap-7 xl:grid-cols-[minmax(0,1fr)_360px]" amount={0.1}>
-          <div className="grid gap-5">
+          <div className="order-2 grid gap-5 xl:order-1">
             <article className="soft-card rounded-[28px] p-5 md:p-8">
               <div className="mb-6">
                 <h2 className="text-[28px] font-black leading-tight">{t("მომზადების ნაბიჯები")}</h2>
@@ -200,6 +218,7 @@ export default async function RecipeDetailPage({ params }: { params: Promise<{ s
           </div>
 
           <IngredientsPanel
+            className="order-1 xl:order-2"
             ingredients={recipe.ingredients}
             baseServings={recipe.baseServings ?? parseServingsCount(recipe.servings)}
             initialServings={recipe.baseServings ?? parseServingsCount(recipe.servings) ?? 1}

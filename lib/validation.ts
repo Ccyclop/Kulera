@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { formatAmount, parseAmountText } from "./ingredients";
-import type { Difficulty, Ingredient, RecipeStep } from "./types";
+import type { Difficulty, Ingredient, RecipeStep, RecipeVisibility } from "./types";
 
 export const difficulties = ["მარტივი", "საშუალო", "რთული"] as const;
 
@@ -17,7 +17,8 @@ export type RecipeFormField =
   | "ingredients"
   | "steps"
   | "imageUrl"
-  | "videoUrl";
+  | "videoUrl"
+  | "visibility";
 
 export type RecipeFieldErrors = Partial<Record<RecipeFormField, string>>;
 
@@ -32,6 +33,7 @@ export type RecipeInput = {
   videoUrl: string | null;
   ingredients: Ingredient[];
   steps: RecipeStep[];
+  visibility: RecipeVisibility;
 };
 
 export type RecipeIngredientRow = {
@@ -55,6 +57,7 @@ export type RecipeFormValues = {
   videoUrl: string;
   ingredients: RecipeIngredientRow[];
   steps: RecipeStepRow[];
+  visibility: RecipeVisibility;
 };
 
 export type AccountField =
@@ -112,6 +115,13 @@ export const commentFormSchema = z.object({
     .max(2000, "კომენტარი 2000 სიმბოლოზე მოკლე უნდა იყოს."),
 });
 
+export const collectionFormSchema = z.object({
+  title: z.string().trim().min(2, "სათაური მინიმუმ 2 სიმბოლო უნდა იყოს.").max(120, "სათაური ძალიან გრძელია."),
+  description: z.string().trim().max(1000, "აღწერა ძალიან გრძელია."),
+  coverImageUrl: z.string().trim().max(1000, "ფოტოს მისამართი ძალიან გრძელია."),
+  visibility: z.enum(["public", "unlisted", "private"]).default("private"),
+});
+
 const uuidSchema = z.string().uuid("აირჩიე სწორი კატეგორია");
 const optionalUuidFormSchema = z.string().trim().refine((value) => !value || uuidSchema.safeParse(value).success, {
   message: "აირჩიე სწორი კატეგორია",
@@ -136,6 +146,7 @@ const recipeFormBaseSchema = z.object({
   servings: z.string().trim().max(80, "პორციები ძალიან გრძელია"),
   imageUrl: z.string().trim().max(1000, "ფოტოს მისამართი ძალიან გრძელია"),
   videoUrl: z.string().trim().max(1000, "ვიდეოს მისამართი ძალიან გრძელია"),
+  visibility: z.enum(["public", "unlisted"]).default("public"),
   ingredients: z.array(recipeIngredientFormSchema).min(1, "დაამატე მინიმუმ ერთი ინგრედიენტი"),
   steps: z.array(recipeStepFormSchema),
 });
@@ -262,6 +273,7 @@ const publishSchema = z.object({
   videoUrl: z.string().trim().max(1000, "ვიდეოს მისამართი ძალიან გრძელია").nullable(),
   ingredients: z.array(ingredientPayloadSchema).min(1, "დაამატე მინიმუმ ერთი ინგრედიენტი"),
   steps: z.array(stepPayloadSchema).min(1, "დაამატე მინიმუმ ერთი ნაბიჯი"),
+  visibility: z.enum(["public", "unlisted"]).default("public"),
 });
 
 const draftSchema = publishSchema.extend({
@@ -415,6 +427,7 @@ export function parseRecipeFormData(formData: FormData, mode: RecipeValidationMo
     videoUrl: nullableStringValue(formData, "videoUrl"),
     ingredients: parseIngredients(formData),
     steps: parseFieldArraySteps(formData),
+    visibility: stringValue(formData, "visibility") === "unlisted" ? "unlisted" : "public",
   };
 
   const schema = mode === "publish" ? publishSchema : draftSchema;

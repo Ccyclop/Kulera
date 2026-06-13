@@ -32,3 +32,8 @@ export function getRecipeVideoUrl(path: string | null | undefined) {
 export function getAvatarUrl(path: string | null | undefined) {
   return getPublicImageUrl(path, AVATAR_BUCKET, "");
 }
+
+// Collection covers reuse the recipe-images bucket (no new bucket/policy needed).
+export function getCollectionCoverUrl(path: string | null | undefined) {
+  return getPublicImageUrl(path, RECIPE_BUCKET, "");
+}

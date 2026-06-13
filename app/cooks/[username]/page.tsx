@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { CollectionCard } from "@/components/collection-card";
 import { HeroTitle, Reveal, Stagger } from "@/components/motion";
 import { QuerySelect } from "@/components/query-select";
 import { RecipeCard } from "@/components/recipe-card";
@@ -12,7 +13,7 @@ import {
   sortOptions,
   timeFilterOptions,
 } from "@/lib/content-options";
-import { getCookByUsername, getRecipesByCook } from "@/lib/data";
+import { getCookByUsername, getPublicCollectionsByCook, getRecipesByCook } from "@/lib/data";
 import { getLocale, getServerTranslator } from "@/lib/i18n/server";
 import { translateCookBadge } from "@/lib/i18n/shared";
 import { DEFAULT_PAGE_SIZE, paginate, readCursorParam } from "@/lib/pagination";
@@ -40,11 +41,14 @@ export default async function CookProfilePage({
     notFound();
   }
 
-  const cookRecipes = await getRecipesByCook(cook.username, {
-    cookingTime,
-    difficulty,
-    sort,
-  });
+  const [cookRecipes, cookCollections] = await Promise.all([
+    getRecipesByCook(cook.username, {
+      cookingTime,
+      difficulty,
+      sort,
+    }),
+    getPublicCollectionsByCook(cook.username),
+  ]);
   const page = paginate(cookRecipes, readCursorParam(queryParams), DEFAULT_PAGE_SIZE);
   const pathname = `/cooks/${username}`;
   const activeTab = sortParam === "top-rated" ? "top-rated" : sortParam === "newest" ? "latest" : "recipes";
@@ -95,6 +99,29 @@ export default async function CookProfilePage({
           </div>
           <span className="hero-watermark">{t("კულინარი")}</span>
         </Reveal>
+
+        {cookCollections.length > 0 ? (
+          <section className="mt-8">
+            <div className="mb-5 flex items-end justify-between gap-2">
+              <div>
+                <h2 className="text-[24px] font-black leading-tight md:text-[28px]">{t("კოლექციები")}</h2>
+                <p className="mt-1 text-sm leading-relaxed text-muted">{t("ავტორის შერჩეული რეცეპტების კრებულები.")}</p>
+              </div>
+              <span className="rounded-full border border-oat bg-surface px-3 py-1 text-xs font-black text-muted tabular-nums">
+                {cookCollections.length}
+              </span>
+            </div>
+            <Stagger as="div" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" stagger={0.06}>
+              {cookCollections.map((collection) => (
+                <CollectionCard
+                  key={collection.id}
+                  collection={collection}
+                  href={`/collections/${cook.username}/${collection.slug}`}
+                />
+              ))}
+            </Stagger>
+          </section>
+        ) : null}
 
         <section className="mt-8">
           <Tabs items={tabs} active={activeTab} />

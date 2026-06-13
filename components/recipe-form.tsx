@@ -70,6 +70,7 @@ function recipeDefaultValues(recipe?: Recipe): RecipeFormValues {
     videoUrl: recipe?.videoPath ?? recipe?.videoUrl ?? "",
     ingredients: makeIngredientRows(recipe?.ingredients),
     steps: makeStepRows(recipe),
+    visibility: recipe?.visibility ?? "public",
   };
 }
 
@@ -165,6 +166,7 @@ export function RecipeForm({
     formData.set("cookingTime", values.cookingTime);
     formData.set("difficulty", values.difficulty);
     formData.set("servings", values.servings);
+    formData.set("visibility", values.visibility);
     formData.set("imageUrl", values.imageUrl);
     formData.set("videoUrl", values.videoUrl);
 
@@ -336,6 +338,20 @@ export function RecipeForm({
           error={mergedError(errors.servings, state.fieldErrors?.servings)}
           {...register("servings")}
         />
+
+        <div className="grid gap-1.5">
+          <Select
+            label="ხილვადობა"
+            error={mergedError(errors.visibility, state.fieldErrors?.visibility)}
+            {...register("visibility")}
+          >
+            <option value="public">{t("საჯარო — ჩანს ძიებასა და სიებში")}</option>
+            <option value="unlisted">{t("მხოლოდ ბმულით — სიებში არ ჩანს")}</option>
+          </Select>
+          <p className="text-[11px] leading-snug text-muted">
+            {t("მხოლოდ ბმულით — რეცეპტი საჯაროდ არ გამოჩნდება, ხელმისაწვდომია მხოლოდ პირდაპირი ბმულით ან კოლექციით.")}
+          </p>
+        </div>
 
         <section className="grid gap-2" aria-describedby={ingredientsError ? "ingredients-error" : undefined}>
           <div className="flex items-center justify-between gap-3">

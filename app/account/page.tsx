@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRight, BookOpen, Library } from "lucide-react";
 import { DeleteAccountForm, NotificationSettingsForm, PasswordSettingsForm, ProfileSettingsForm } from "@/components/account-forms";
 import { HeroTitle, Reveal, Stagger } from "@/components/motion";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SupabaseSetupNotice } from "@/components/supabase-setup-notice";
 import { requireAuth } from "@/lib/auth";
-import { getAccountProfile, getOwnedRecipes } from "@/lib/data";
+import { getAccountProfile, getOwnedCollections, getOwnedRecipes } from "@/lib/data";
 import { getServerTranslator } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -22,13 +22,15 @@ export default async function AccountPage() {
     );
   }
 
-  const [profile, ownedRecipes] = await Promise.all([
+  const [profile, ownedRecipes, ownedCollections] = await Promise.all([
     getAccountProfile(auth.userId, auth.claims),
     getOwnedRecipes(auth.userId),
+    getOwnedCollections(auth.userId),
   ]);
 
   const draftCount = ownedRecipes.filter((recipe) => recipe.status === "draft").length;
   const publishedCount = ownedRecipes.filter((recipe) => recipe.status === "published").length;
+  const collectionCount = ownedCollections.length;
 
   return (
       <main className="page-main">
@@ -56,6 +58,26 @@ export default async function AccountPage() {
                 <h2 className="text-[18px] font-black leading-tight text-ink md:text-[20px]">{t("ჩემი რეცეპტები")}</h2>
                 <p className="mt-1 text-xs font-bold text-muted md:text-sm">
                   {t("{publishedCount} გამოქვეყნებული • {draftCount} მონახაზი", { publishedCount, draftCount })}
+                </p>
+              </div>
+            </div>
+            <span className="grid h-10 w-10 place-items-center rounded-full border border-oat bg-surface text-clay transition-transform duration-200 group-hover:translate-x-1">
+              <ArrowRight className="h-4 w-4" />
+            </span>
+          </Link>
+
+          <Link
+            href="/account/collections"
+            className="soft-card group flex items-center justify-between gap-4 rounded-[28px] p-5 no-underline transition-shadow duration-200 hover:shadow-panel md:p-6"
+          >
+            <div className="flex items-center gap-4">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-sage-light text-sage">
+                <Library className="h-5 w-5" />
+              </span>
+              <div>
+                <h2 className="text-[18px] font-black leading-tight text-ink md:text-[20px]">{t("ჩემი კოლექციები")}</h2>
+                <p className="mt-1 text-xs font-bold text-muted md:text-sm">
+                  {t("{count} კოლექცია", { count: collectionCount })}
                 </p>
               </div>
             </div>

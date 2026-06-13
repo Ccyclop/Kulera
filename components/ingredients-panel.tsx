@@ -33,11 +33,13 @@ export function IngredientsPanel({
   baseServings,
   initialServings,
   servingsLabel,
+  className,
 }: {
   ingredients: Ingredient[];
   baseServings: number | null;
   initialServings: number;
   servingsLabel: string;
+  className?: string;
 }) {
   const [servings, setServings] = useState(() => Math.max(MIN_SERVINGS, Math.round(initialServings)));
   const [checked, setChecked] = useState<Set<number>>(() => new Set());
@@ -71,7 +73,7 @@ export function IngredientsPanel({
   const showScaler = baseServings != null && baseServings > 0;
 
   return (
-    <aside className="soft-card h-fit rounded-[28px] p-5 xl:sticky xl:top-28">
+    <aside className={cn("soft-card h-fit rounded-[28px] p-5 xl:sticky xl:top-28", className)}>
       <h2 className="text-[23px] font-black leading-tight">{t("ინგრედიენტები")}</h2>
       <p className="mt-2 text-sm leading-relaxed text-muted">{t("მონიშნე რაც უკვე გაქვს.")}</p>
 
